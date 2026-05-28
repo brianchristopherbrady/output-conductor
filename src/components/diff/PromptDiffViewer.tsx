@@ -327,6 +327,25 @@ export function PromptDiffViewer({ executions }: PromptDiffViewerProps) {
   const [runBId, setRunBId] = useState('');
   const [selectedStepName, setSelectedStepName] = useState('');
 
+  // Compute step names for Run A
+  const runA = useMemo(
+    () => executions.find(execution => execution.id === runAId),
+    [executions, runAId],
+  );
+
+  const runAStepNames = useMemo(
+    () => new Set(runA?.steps.map(s => s.name) || []),
+    [runA],
+  );
+
+  // Filter Run B candidates: only executions sharing at least one step name with Run A
+  const runBCandidates = useMemo(() => {
+    if (!runA || runAStepNames.size === 0) return [];
+    return executions.filter(ex =>
+      ex.id !== runAId && ex.steps.some(s => runAStepNames.has(s.name))
+    );
+  }, [executions, runAId, runA, runAStepNames]);
+
   useEffect(() => {
     if (executions.length === 0) {
       setRunAId('');
@@ -335,19 +354,20 @@ export function PromptDiffViewer({ executions }: PromptDiffViewerProps) {
     }
 
     setRunAId(current => (executions.some(execution => execution.id === current) ? current : executions[0].id));
-    setRunBId(current => {
-      if (executions.some(execution => execution.id === current)) {
-        return current;
-      }
-
-      return executions[1]?.id ?? executions[0].id;
-    });
   }, [executions]);
 
-  const runA = useMemo(
-    () => executions.find(execution => execution.id === runAId),
-    [executions, runAId],
-  );
+  // When Run A changes or candidates change, reset Run B if invalid
+  useEffect(() => {
+    if (runBCandidates.length === 0) {
+      setRunBId('');
+      return;
+    }
+    setRunBId(current => {
+      if (runBCandidates.some(ex => ex.id === current)) return current;
+      return runBCandidates[0].id;
+    });
+  }, [runBCandidates]);
+
   const runB = useMemo(
     () => executions.find(execution => execution.id === runBId),
     [executions, runBId],
@@ -400,6 +420,7 @@ export function PromptDiffViewer({ executions }: PromptDiffViewerProps) {
   const leftLabel = `Run A • ${runA ? getExecutionLabel(runA) : 'Select a run'}`;
   const rightLabel = `Run B • ${runB ? getExecutionLabel(runB) : 'Select a run'}`;
   const noSharedSteps = sharedStepNames.length === 0;
+  const noCompatibleRuns = runBCandidates.length === 0;
   const noLlmTraces = selectedStepName.length > 0 && runASummary.traces.length === 0 && runBSummary.traces.length === 0;
 
   return (
@@ -431,22 +452,27 @@ export function PromptDiffViewer({ executions }: PromptDiffViewerProps) {
         </label>
 
         <label className="space-y-2 text-sm">
-          <span style={{ color: 'var(--ds-text-muted)' }}>Run B</span>
+          <span style={{ color: 'var(--ds-text-muted)' }}>Run B (same workflow steps)</span>
           <select
             value={runBId}
             onChange={(event) => setRunBId(event.target.value)}
-            className="w-full rounded-lg border px-3 py-2 outline-none transition-colors"
+            disabled={runBCandidates.length === 0}
+            className="w-full rounded-lg border px-3 py-2 outline-none transition-colors disabled:cursor-not-allowed disabled:opacity-60"
             style={{
               backgroundColor: 'var(--ds-bg-secondary)',
               borderColor: 'var(--ds-border-primary)',
               color: 'var(--ds-text-primary)',
             }}
           >
-            {executions.map(execution => (
-              <option key={execution.id} value={execution.id}>
-                {getExecutionLabel(execution)}
-              </option>
-            ))}
+            {runBCandidates.length === 0 ? (
+              <option value="">No compatible runs</option>
+            ) : (
+              runBCandidates.map(execution => (
+                <option key={execution.id} value={execution.id}>
+                  {getExecutionLabel(execution)}
+                </option>
+              ))
+            )}
           </select>
         </label>
 
@@ -476,7 +502,18 @@ export function PromptDiffViewer({ executions }: PromptDiffViewerProps) {
         </label>
       </div>
 
-      {noSharedSteps ? (
+      {noCompatibleRuns ? (
+        <div
+          className="rounded-lg border px-4 py-6 text-sm"
+          style={{
+            backgroundColor: 'var(--ds-bg-secondary)',
+            borderColor: 'var(--ds-border-primary)',
+            color: 'var(--ds-text-muted)',
+          }}
+        >
+          No other runs share step names with the selected Run A. Try selecting a different run.
+        </div>
+      ) : noSharedSteps ? (
         <div
           className="rounded-lg border px-4 py-6 text-sm"
           style={{
