@@ -1,10 +1,10 @@
-import { useState, useMemo, useRef, useEffect, useCallback } from 'react';
+import { useState, useMemo, useRef, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { WorkflowExecution, StepExecution } from '@/types';
 import { cn, formatDuration } from '@/utils';
 import {
-  CheckCircle2, XCircle, Loader2, Zap, Clock, RefreshCw,
-  Database, ArrowRight, X, AlertTriangle, ChevronRight,
+  CheckCircle2, XCircle, Loader2, Clock, RefreshCw,
+  Database, X, ChevronRight, ArrowLeft, Route, Info,
 } from 'lucide-react';
 
 // --- Types ---
@@ -14,8 +14,6 @@ interface FlowNode {
   step: StepExecution;
   x: number;
   y: number;
-  col: number;
-  row: number;
 }
 
 interface FlowEdge {
@@ -34,20 +32,19 @@ interface Particle {
 
 // --- Constants ---
 
-const NODE_WIDTH = 180;
-const NODE_HEIGHT = 64;
-const H_GAP = 80;
-const V_GAP = 40;
+const NODE_W = 200;
+const NODE_H = 70;
+const H_SPACING = 100;
+const V_SPACING = 100;
+const COLS = 4;
 
-const STATUS_COLORS: Record<string, { bg: string; border: string; text: string; glow: string }> = {
-  completed: { bg: 'var(--ds-status-success)', border: 'rgba(34,197,94,0.5)', text: '#fff', glow: 'rgba(34,197,94,0.3)' },
-  running: { bg: 'var(--ds-status-info)', border: 'rgba(59,130,246,0.5)', text: '#fff', glow: 'rgba(59,130,246,0.4)' },
-  failed: { bg: 'var(--ds-status-error)', border: 'rgba(239,68,68,0.5)', text: '#fff', glow: 'rgba(239,68,68,0.3)' },
-  cached: { bg: 'var(--ds-status-cached)', border: 'rgba(168,85,247,0.5)', text: '#fff', glow: 'rgba(168,85,247,0.3)' },
-  pending: { bg: 'var(--ds-text-muted)', border: 'rgba(113,113,122,0.4)', text: '#a1a1aa', glow: 'rgba(113,113,122,0.15)' },
+const STATUS_COLORS: Record<string, { bg: string; border: string; glow: string }> = {
+  completed: { bg: 'var(--ds-status-success)', border: 'rgba(34,197,94,0.5)', glow: 'rgba(34,197,94,0.25)' },
+  running: { bg: 'var(--ds-status-info)', border: 'rgba(59,130,246,0.6)', glow: 'rgba(59,130,246,0.35)' },
+  failed: { bg: 'var(--ds-status-error)', border: 'rgba(239,68,68,0.5)', glow: 'rgba(239,68,68,0.25)' },
+  cached: { bg: 'var(--ds-status-cached)', border: 'rgba(6,182,212,0.5)', glow: 'rgba(6,182,212,0.25)' },
+  pending: { bg: 'var(--ds-text-muted)', border: 'rgba(113,113,122,0.3)', glow: 'rgba(113,113,122,0.1)' },
 };
-
-// --- Helpers ---
 
 function getStatusIcon(status: StepExecution['status'], className: string) {
   switch (status) {
@@ -59,67 +56,48 @@ function getStatusIcon(status: StepExecution['status'], className: string) {
   }
 }
 
-function layoutNodes(steps: StepExecution[]): FlowNode[] {
-  // Simple linear layout with wrapping at 4 nodes per row
-  const COLS = 4;
-  return steps.map((step, i) => {
-    const col = i % COLS;
-    const row = Math.floor(i / COLS);
-    return {
-      id: step.id,
-      step,
-      col,
-      row,
-      x: col * (NODE_WIDTH + H_GAP) + 40,
-      y: row * (NODE_HEIGHT + V_GAP + 40) + 40,
-    };
-  });
+// --- Layout ---
+
+function layoutSteps(steps: StepExecution[]): FlowNode[] {
+  return steps.map((step, i) => ({
+    id: step.id,
+    step,
+    x: (i % COLS) * (NODE_W + H_SPACING) + 50,
+    y: Math.floor(i / COLS) * (NODE_H + V_SPACING) + 50,
+  }));
 }
 
 function buildEdges(nodes: FlowNode[]): FlowEdge[] {
-  const edges: FlowEdge[] = [];
-  for (let i = 0; i < nodes.length - 1; i++) {
-    const from = nodes[i];
+  return nodes.slice(0, -1).map((from, i) => {
     const to = nodes[i + 1];
-    const status = from.step.status === 'completed' || from.step.status === 'cached'
-      ? (to.step.status === 'failed' ? 'failed' : to.step.status === 'running' ? 'active' : 'completed')
-      : from.step.status === 'running' ? 'active' : 'pending';
-    edges.push({ id: `${from.id}->${to.id}`, from, to, status });
-  }
-  return edges;
+    let status: FlowEdge['status'] = 'pending';
+    if (from.step.status === 'completed' || from.step.status === 'cached') {
+      status = to.step.status === 'failed' ? 'failed' : to.step.status === 'running' ? 'active' : 'completed';
+    } else if (from.step.status === 'running') {
+      status = 'active';
+    }
+    return { id: `${from.id}->${to.id}`, from, to, status };
+  });
 }
 
-// --- Edge Path Computation ---
-
-function computeEdgePath(from: FlowNode, to: FlowNode): string {
-  const COLS = 4;
-  // Same row: straight arrow right
-  if (from.row === to.row) {
-    const x1 = from.x + NODE_WIDTH;
-    const y1 = from.y + NODE_HEIGHT / 2;
-    const x2 = to.x;
-    const y2 = to.y + NODE_HEIGHT / 2;
-    const cx1 = x1 + (x2 - x1) * 0.4;
-    const cx2 = x1 + (x2 - x1) * 0.6;
-    return `M ${x1} ${y1} C ${cx1} ${y1}, ${cx2} ${y2}, ${x2} ${y2}`;
+function edgePath(from: FlowNode, to: FlowNode): string {
+  if (from.y === to.y) {
+    const x1 = from.x + NODE_W, y1 = from.y + NODE_H / 2;
+    const x2 = to.x, y2 = to.y + NODE_H / 2;
+    return `M ${x1} ${y1} C ${x1 + 40} ${y1}, ${x2 - 40} ${y2}, ${x2} ${y2}`;
   }
-  // Different row: curve down to next row
-  const x1 = from.x + NODE_WIDTH / 2;
-  const y1 = from.y + NODE_HEIGHT;
-  const x2 = to.x + NODE_WIDTH / 2;
-  const y2 = to.y;
+  const x1 = from.x + NODE_W / 2, y1 = from.y + NODE_H;
+  const x2 = to.x + NODE_W / 2, y2 = to.y;
   const midY = (y1 + y2) / 2;
   return `M ${x1} ${y1} C ${x1} ${midY}, ${x2} ${midY}, ${x2} ${y2}`;
 }
-
-// --- Edge Color ---
 
 function edgeColor(status: FlowEdge['status']): string {
   switch (status) {
     case 'completed': return 'rgba(34,197,94,0.6)';
     case 'active': return 'rgba(59,130,246,0.8)';
     case 'failed': return 'rgba(239,68,68,0.6)';
-    case 'pending': return 'rgba(113,113,122,0.3)';
+    case 'pending': return 'rgba(113,113,122,0.25)';
   }
 }
 
@@ -127,90 +105,53 @@ function edgeColor(status: FlowEdge['status']): string {
 
 function useParticles(edges: FlowEdge[]) {
   const [particles, setParticles] = useState<Particle[]>([]);
-  const frameRef = useRef<number>(0);
-  const lastTimeRef = useRef<number>(0);
+  const frameRef = useRef(0);
+  const lastRef = useRef(0);
 
   useEffect(() => {
-    // Only animate active edges
-    const activeEdges = edges.filter(e => e.status === 'active' || e.status === 'completed');
-    if (activeEdges.length === 0) {
-      setParticles([]);
-      return;
-    }
+    const active = edges.filter(e => e.status === 'active' || e.status === 'completed');
+    if (!active.length) { setParticles([]); return; }
 
-    // Spawn particles
-    const initialParticles: Particle[] = activeEdges.flatMap(edge => {
-      const count = edge.status === 'active' ? 3 : 1;
-      return Array.from({ length: count }, (_, i) => ({
+    const initial: Particle[] = active.flatMap(edge =>
+      Array.from({ length: edge.status === 'active' ? 3 : 1 }, (_, i) => ({
         id: `${edge.id}_p${i}`,
         edgeId: edge.id,
-        progress: (i / count),
-        speed: edge.status === 'active' ? 0.008 + Math.random() * 0.004 : 0.003 + Math.random() * 0.002,
-      }));
-    });
+        progress: i / (edge.status === 'active' ? 3 : 1),
+        speed: edge.status === 'active' ? 0.008 + Math.random() * 0.004 : 0.003,
+      }))
+    );
+    setParticles(initial);
 
-    setParticles(initialParticles);
-
-    function animate(time: number) {
-      if (lastTimeRef.current === 0) lastTimeRef.current = time;
-      const dt = Math.min((time - lastTimeRef.current) / 16, 3); // normalize to ~60fps
-      lastTimeRef.current = time;
-
-      setParticles(prev => prev.map(p => ({
-        ...p,
-        progress: (p.progress + p.speed * dt) % 1,
-      })));
-      frameRef.current = requestAnimationFrame(animate);
+    function tick(t: number) {
+      if (!lastRef.current) lastRef.current = t;
+      const dt = Math.min((t - lastRef.current) / 16, 3);
+      lastRef.current = t;
+      setParticles(prev => prev.map(p => ({ ...p, progress: (p.progress + p.speed * dt) % 1 })));
+      frameRef.current = requestAnimationFrame(tick);
     }
-
-    frameRef.current = requestAnimationFrame(animate);
-    return () => {
-      cancelAnimationFrame(frameRef.current);
-      lastTimeRef.current = 0;
-    };
+    frameRef.current = requestAnimationFrame(tick);
+    return () => { cancelAnimationFrame(frameRef.current); lastRef.current = 0; };
   }, [edges]);
 
   return particles;
 }
 
-// --- Aggregate Stats View ---
+// --- Particle Renderer ---
 
-interface AggregateData {
-  workflowName: string;
-  stepNames: string[];
-  stepStats: Map<string, { total: number; completed: number; failed: number; cached: number; avgDuration: number }>;
-  totalRuns: number;
+function ParticleDot({ pathD, progress, color }: { pathD: string; progress: number; color: string }) {
+  const pathEl = useMemo(() => {
+    const p = document.createElementNS('http://www.w3.org/2000/svg', 'path');
+    p.setAttribute('d', pathD);
+    return p;
+  }, [pathD]);
+
+  const len = pathEl.getTotalLength();
+  const pt = pathEl.getPointAtLength(progress * len);
+
+  return <circle cx={pt.x} cy={pt.y} r={3} fill={color} opacity={0.85} filter="url(#glow)" />;
 }
 
-function computeAggregates(executions: WorkflowExecution[]): AggregateData[] {
-  const byWorkflow = new Map<string, WorkflowExecution[]>();
-  executions.forEach(ex => {
-    const list = byWorkflow.get(ex.workflowName) || [];
-    list.push(ex);
-    byWorkflow.set(ex.workflowName, list);
-  });
-
-  return Array.from(byWorkflow.entries())
-    .map(([workflowName, execs]) => {
-      const stepNames = execs[0]?.steps.map(s => s.name) || [];
-      const stepStats = new Map<string, { total: number; completed: number; failed: number; cached: number; avgDuration: number }>();
-
-      stepNames.forEach(name => {
-        const steps = execs.flatMap(ex => ex.steps.filter(s => s.name === name));
-        const total = steps.length;
-        const completed = steps.filter(s => s.status === 'completed').length;
-        const failed = steps.filter(s => s.status === 'failed').length;
-        const cached = steps.filter(s => s.status === 'cached').length;
-        const avgDuration = steps.reduce((sum, s) => sum + (s.duration || 0), 0) / total;
-        stepStats.set(name, { total, completed, failed, cached, avgDuration });
-      });
-
-      return { workflowName, stepNames, stepStats, totalRuns: execs.length };
-    })
-    .sort((a, b) => b.totalRuns - a.totalRuns);
-}
-
-// --- Components ---
+// --- Main Component ---
 
 interface FlowGraphProps {
   executions: WorkflowExecution[];
@@ -219,96 +160,314 @@ interface FlowGraphProps {
 }
 
 export function FlowGraph({ executions, selectedExecution, onSelectExecution }: FlowGraphProps) {
-  const [hoveredNode, setHoveredNode] = useState<string | null>(null);
-  const [selectedNode, setSelectedNode] = useState<FlowNode | null>(null);
+  // Self-managed internal state for which execution is being viewed in detail
+  const [internalExecution, setInternalExecution] = useState<WorkflowExecution | null>(null);
   const [selectedWorkflow, setSelectedWorkflow] = useState<string | null>(null);
-  const svgRef = useRef<SVGSVGElement>(null);
+  const [inspectedStep, setInspectedStep] = useState<StepExecution | null>(null);
 
-  // If an execution is selected, show its flow; otherwise show aggregate
-  const mode = selectedExecution ? 'detail' : 'aggregate';
-  const aggregates = useMemo(() => computeAggregates(executions), [executions]);
+  // Use either the externally selected execution or the internal one
+  const activeExecution = selectedExecution || internalExecution;
 
-  // Auto-select first workflow for aggregate view
-  const activeWorkflow = selectedWorkflow || aggregates[0]?.workflowName || null;
+  const aggregates = useMemo(() => {
+    const byWorkflow = new Map<string, WorkflowExecution[]>();
+    executions.forEach(ex => {
+      const list = byWorkflow.get(ex.workflowName) || [];
+      list.push(ex);
+      byWorkflow.set(ex.workflowName, list);
+    });
+    return Array.from(byWorkflow.entries())
+      .map(([name, execs]) => ({ name, execs, count: execs.length }))
+      .sort((a, b) => b.count - a.count);
+  }, [executions]);
 
-  if (mode === 'detail' && selectedExecution) {
+  const activeWorkflowName = selectedWorkflow || aggregates[0]?.name || null;
+  const workflowExecutions = useMemo(
+    () => executions.filter(e => e.workflowName === activeWorkflowName),
+    [executions, activeWorkflowName]
+  );
+
+  function selectExecution(ex: WorkflowExecution) {
+    setInternalExecution(ex);
+    onSelectExecution(ex);
+    setInspectedStep(null);
+  }
+
+  function goBack() {
+    setInternalExecution(null);
+    onSelectExecution(null);
+    setInspectedStep(null);
+  }
+
+  // --- DETAIL MODE ---
+  if (activeExecution) {
     return (
-      <DetailFlowView
-        execution={selectedExecution}
-        hoveredNode={hoveredNode}
-        setHoveredNode={setHoveredNode}
-        selectedNode={selectedNode}
-        setSelectedNode={setSelectedNode}
-        onClose={() => onSelectExecution(null)}
+      <DetailView
+        execution={activeExecution}
+        inspectedStep={inspectedStep}
+        setInspectedStep={setInspectedStep}
+        onBack={goBack}
       />
     );
   }
 
+  // --- AGGREGATE MODE ---
   return (
     <div className="flex h-full flex-col overflow-hidden">
-      {/* Workflow selector */}
+      {/* Header */}
       <div
-        className="flex items-center gap-3 border-b px-4 py-3"
+        className="flex items-center justify-between border-b px-4 py-2.5"
         style={{ borderColor: 'var(--ds-border-secondary)', backgroundColor: 'var(--ds-bg-secondary)' }}
       >
-        <span className="text-xs font-medium" style={{ color: 'var(--ds-text-muted)' }}>Workflow:</span>
-        <div className="flex flex-wrap gap-1.5">
-          {aggregates.map(agg => (
-            <button
-              key={agg.workflowName}
-              onClick={() => setSelectedWorkflow(agg.workflowName)}
-              className={cn(
-                'rounded-md px-2.5 py-1 text-xs font-medium transition-all',
-                activeWorkflow === agg.workflowName
-                  ? 'bg-conductor-500/20 text-conductor-300 ring-1 ring-conductor-500/30'
-                  : 'hover:bg-white/5',
-              )}
-              style={{
-                color: activeWorkflow === agg.workflowName ? undefined : 'var(--ds-text-tertiary)',
-              }}
-            >
-              {agg.workflowName}
-              <span className="ml-1 opacity-50">({agg.totalRuns})</span>
-            </button>
-          ))}
+        <div className="flex items-center gap-2">
+          <Route className="h-4 w-4" style={{ color: 'var(--ds-text-muted)' }} />
+          <h2 className="text-xs font-bold" style={{ color: 'var(--ds-text-primary)' }}>
+            Pipeline Flow
+          </h2>
+          <span className="text-[10px] px-2 py-0.5 rounded-full" style={{ color: 'var(--ds-text-muted)', backgroundColor: 'var(--ds-bg-tertiary)' }}>
+            Aggregate view — step health across all runs
+          </span>
         </div>
       </div>
 
-      {/* Aggregate flow view */}
-      {activeWorkflow && (
-        <AggregateFlowView
-          data={aggregates.find(a => a.workflowName === activeWorkflow)!}
-          executions={executions.filter(e => e.workflowName === activeWorkflow)}
-          onSelectExecution={onSelectExecution}
-        />
-      )}
+      {/* Workflow tabs */}
+      <div
+        className="flex items-center gap-2 border-b px-4 py-2 overflow-x-auto"
+        style={{ borderColor: 'var(--ds-border-secondary)' }}
+      >
+        {aggregates.map(agg => (
+          <button
+            key={agg.name}
+            onClick={() => setSelectedWorkflow(agg.name)}
+            className={cn(
+              'rounded-md px-2.5 py-1 text-xs font-medium transition-all whitespace-nowrap',
+              activeWorkflowName === agg.name
+                ? 'bg-conductor-500/20 text-conductor-300 ring-1 ring-conductor-500/30'
+                : 'hover:bg-white/5',
+            )}
+            style={{ color: activeWorkflowName === agg.name ? undefined : 'var(--ds-text-tertiary)' }}
+          >
+            {agg.name.replace(/_/g, ' ')}
+            <span className="ml-1.5 opacity-50">{agg.count}</span>
+          </button>
+        ))}
+      </div>
+
+      {/* Content */}
+      <div className="flex flex-1 overflow-hidden">
+        {/* Aggregate graph */}
+        <div className="flex-1 overflow-auto p-6">
+          {activeWorkflowName && (
+            <AggregateGraph
+              executions={workflowExecutions}
+              onSelectExecution={selectExecution}
+            />
+          )}
+        </div>
+
+        {/* Execution list sidebar */}
+        <div
+          className="w-64 flex flex-col overflow-hidden border-l"
+          style={{ borderColor: 'var(--ds-border-secondary)', backgroundColor: 'var(--ds-bg-secondary)' }}
+        >
+          <div className="px-3 py-2.5 border-b" style={{ borderColor: 'var(--ds-border-secondary)' }}>
+            <h3 className="text-[11px] font-semibold" style={{ color: 'var(--ds-text-primary)' }}>
+              Recent Executions
+            </h3>
+            <p className="text-[9px] mt-0.5" style={{ color: 'var(--ds-text-muted)' }}>
+              Select one to see its step-by-step flow
+            </p>
+          </div>
+          <div className="flex-1 overflow-y-auto p-1.5 space-y-0.5">
+            {workflowExecutions.slice(0, 40).map(ex => {
+              const done = ex.steps.filter(s => s.status === 'completed' || s.status === 'cached').length;
+              const failed = ex.steps.some(s => s.status === 'failed');
+              return (
+                <button
+                  key={ex.id}
+                  onClick={() => selectExecution(ex)}
+                  className="w-full rounded-lg px-2.5 py-2 text-left transition-all hover:bg-white/5 flex items-center gap-2 group"
+                >
+                  <span
+                    className="w-2 h-2 rounded-full flex-shrink-0"
+                    style={{ backgroundColor: STATUS_COLORS[ex.status]?.bg }}
+                  />
+                  <div className="flex-1 min-w-0">
+                    <p className="text-[11px] font-medium truncate" style={{ color: 'var(--ds-text-secondary)' }}>
+                      {done}/{ex.steps.length} steps passed
+                      {failed && <span className="ml-1 text-red-400">✕</span>}
+                    </p>
+                    <p className="text-[9px]" style={{ color: 'var(--ds-text-muted)' }}>
+                      {formatDuration(ex.duration || 0)} • {ex.id.slice(3, 11)}
+                    </p>
+                  </div>
+                  <ChevronRight className="h-3 w-3 opacity-0 group-hover:opacity-100 transition-opacity" style={{ color: 'var(--ds-text-muted)' }} />
+                </button>
+              );
+            })}
+          </div>
+        </div>
+      </div>
     </div>
   );
 }
 
-// --- Detail Flow View (single execution) ---
+// --- Aggregate Graph (step health across runs) ---
 
-function DetailFlowView({
+function AggregateGraph({
+  executions,
+  onSelectExecution,
+}: {
+  executions: WorkflowExecution[];
+  onSelectExecution: (ex: WorkflowExecution) => void;
+}) {
+  if (!executions.length) return null;
+  const stepNames = executions[0].steps.map(s => s.name);
+
+  // Compute stats per step
+  const stepData = stepNames.map((name, i) => {
+    const allSteps = executions.map(ex => ex.steps[i]).filter(Boolean);
+    const total = allSteps.length;
+    const completed = allSteps.filter(s => s.status === 'completed').length;
+    const failed = allSteps.filter(s => s.status === 'failed').length;
+    const cached = allSteps.filter(s => s.status === 'cached').length;
+    const avgDuration = allSteps.reduce((s, st) => s + (st.duration || 0), 0) / total;
+    return { name, total, completed, failed, cached, avgDuration, successRate: (completed + cached) / total, failRate: failed / total };
+  });
+
+  // Layout
+  const nodes = stepData.map((d, i) => ({
+    ...d,
+    x: (i % COLS) * (NODE_W + H_SPACING) + 40,
+    y: Math.floor(i / COLS) * (NODE_H + V_SPACING) + 40,
+  }));
+
+  const svgW = Math.max(...nodes.map(n => n.x + NODE_W)) + 60;
+  const svgH = Math.max(...nodes.map(n => n.y + NODE_H)) + 60;
+
+  // Edges
+  const edges = nodes.slice(0, -1).map((from, i) => {
+    const to = nodes[i + 1];
+    return { from, to, throughput: from.successRate };
+  });
+
+  return (
+    <div>
+      {/* Legend */}
+      <div className="flex items-center gap-4 mb-4">
+        <div className="flex items-center gap-1.5">
+          <span className="w-3 h-1.5 rounded-full bg-green-500" />
+          <span className="text-[10px]" style={{ color: 'var(--ds-text-muted)' }}>Passed</span>
+        </div>
+        <div className="flex items-center gap-1.5">
+          <span className="w-3 h-1.5 rounded-full bg-red-500" />
+          <span className="text-[10px]" style={{ color: 'var(--ds-text-muted)' }}>Failed</span>
+        </div>
+        <div className="flex items-center gap-1.5">
+          <span className="w-3 h-1.5 rounded-full bg-cyan-500" />
+          <span className="text-[10px]" style={{ color: 'var(--ds-text-muted)' }}>Cached</span>
+        </div>
+        <span className="text-[10px] ml-auto" style={{ color: 'var(--ds-text-muted)' }}>
+          Edge thickness = throughput rate
+        </span>
+      </div>
+
+      <svg width={svgW} height={svgH} className="select-none">
+        <defs>
+          <filter id="aggGlow" x="-50%" y="-50%" width="200%" height="200%">
+            <feGaussianBlur stdDeviation="3" result="blur" />
+            <feMerge><feMergeNode in="blur" /><feMergeNode in="SourceGraphic" /></feMerge>
+          </filter>
+        </defs>
+
+        {/* Edges */}
+        {edges.map((e, i) => {
+          const path = computePath(e.from, e.to);
+          const w = 1.5 + e.throughput * 3;
+          const opacity = 0.3 + e.throughput * 0.5;
+          return (
+            <g key={i}>
+              <path d={path} fill="none" stroke={`rgba(34,197,94,${opacity * 0.3})`} strokeWidth={w + 4} strokeLinecap="round" filter="url(#aggGlow)" />
+              <path d={path} fill="none" stroke={`rgba(34,197,94,${opacity})`} strokeWidth={w} strokeLinecap="round" />
+            </g>
+          );
+        })}
+
+        {/* Nodes */}
+        {nodes.map((node, i) => {
+          const barW = NODE_W - 24;
+          return (
+            <g key={node.name} className="cursor-default">
+              {/* Card bg */}
+              <rect x={node.x} y={node.y} width={NODE_W} height={NODE_H} rx={10}
+                fill="var(--ds-bg-tertiary)" stroke="var(--ds-border-primary)" strokeWidth={1} />
+              {/* Left accent */}
+              <rect x={node.x} y={node.y + 8} width={3} height={NODE_H - 16} rx={1.5}
+                fill={node.failRate > 0.2 ? 'var(--ds-status-error)' : 'var(--ds-status-success)'} />
+              {/* Step name */}
+              <text x={node.x + 14} y={node.y + 20} fontSize={11} fontWeight={600}
+                fill="var(--ds-text-primary)" fontFamily="inherit">
+                {node.name}
+              </text>
+              {/* Stats */}
+              <text x={node.x + 14} y={node.y + 36} fontSize={10} fill="var(--ds-text-muted)" fontFamily="inherit">
+                {(node.successRate * 100).toFixed(0)}% pass · ~{formatDuration(node.avgDuration)}
+              </text>
+              {/* Bar */}
+              <rect x={node.x + 12} y={node.y + 48} width={barW} height={5} rx={2.5}
+                fill="var(--ds-text-muted)" opacity={0.1} />
+              <rect x={node.x + 12} y={node.y + 48} width={barW * node.successRate} height={5} rx={2.5}
+                fill="var(--ds-status-success)" opacity={0.8} />
+              {node.failRate > 0 && (
+                <rect x={node.x + 12 + barW * node.successRate} y={node.y + 48}
+                  width={barW * node.failRate} height={5} rx={2.5} fill="var(--ds-status-error)" opacity={0.8} />
+              )}
+              {/* Step number */}
+              <circle cx={node.x + NODE_W - 16} cy={node.y + 16} r={9}
+                fill="var(--ds-bg-app)" stroke="var(--ds-border-primary)" strokeWidth={0.5} />
+              <text x={node.x + NODE_W - 16} y={node.y + 20} fontSize={9} fill="var(--ds-text-muted)"
+                textAnchor="middle" fontWeight={600} fontFamily="inherit">{i + 1}</text>
+            </g>
+          );
+        })}
+      </svg>
+    </div>
+  );
+}
+
+function computePath(from: { x: number; y: number }, to: { x: number; y: number }): string {
+  if (from.y === to.y) {
+    const x1 = from.x + NODE_W, y1 = from.y + NODE_H / 2;
+    const x2 = to.x, y2 = to.y + NODE_H / 2;
+    return `M ${x1} ${y1} C ${x1 + 40} ${y1}, ${x2 - 40} ${y2}, ${x2} ${y2}`;
+  }
+  const x1 = from.x + NODE_W / 2, y1 = from.y + NODE_H;
+  const x2 = to.x + NODE_W / 2, y2 = to.y;
+  const midY = (y1 + y2) / 2;
+  return `M ${x1} ${y1} C ${x1} ${midY}, ${x2} ${midY}, ${x2} ${y2}`;
+}
+
+// --- Detail View (single execution flow) ---
+
+function DetailView({
   execution,
-  hoveredNode,
-  setHoveredNode,
-  selectedNode,
-  setSelectedNode,
-  onClose,
+  inspectedStep,
+  setInspectedStep,
+  onBack,
 }: {
   execution: WorkflowExecution;
-  hoveredNode: string | null;
-  setHoveredNode: (id: string | null) => void;
-  selectedNode: FlowNode | null;
-  setSelectedNode: (node: FlowNode | null) => void;
-  onClose: () => void;
+  inspectedStep: StepExecution | null;
+  setInspectedStep: (s: StepExecution | null) => void;
+  onBack: () => void;
 }) {
-  const nodes = useMemo(() => layoutNodes(execution.steps), [execution.steps]);
+  const nodes = useMemo(() => layoutSteps(execution.steps), [execution.steps]);
   const edges = useMemo(() => buildEdges(nodes), [nodes]);
   const particles = useParticles(edges);
 
-  const svgWidth = Math.max(...nodes.map(n => n.x + NODE_WIDTH)) + 80;
-  const svgHeight = Math.max(...nodes.map(n => n.y + NODE_HEIGHT)) + 80;
+  const svgW = Math.max(...nodes.map(n => n.x + NODE_W)) + 80;
+  const svgH = Math.max(...nodes.map(n => n.y + NODE_H)) + 80;
+
+  const completedSteps = execution.steps.filter(s => s.status === 'completed' || s.status === 'cached').length;
+  const failedStep = execution.steps.find(s => s.status === 'failed');
 
   return (
     <div className="flex h-full flex-col overflow-hidden">
@@ -318,190 +477,119 @@ function DetailFlowView({
         style={{ borderColor: 'var(--ds-border-secondary)', backgroundColor: 'var(--ds-bg-secondary)' }}
       >
         <div className="flex items-center gap-3">
-          <span className="text-xs font-semibold" style={{ color: 'var(--ds-text-primary)' }}>
-            {execution.workflowName}
+          <button
+            onClick={onBack}
+            className="flex items-center gap-1.5 rounded-md px-2 py-1 text-xs font-medium transition-all hover:bg-white/5"
+            style={{ color: 'var(--ds-text-muted)' }}
+          >
+            <ArrowLeft className="h-3.5 w-3.5" />
+            Back
+          </button>
+          <div className="h-4 w-px" style={{ backgroundColor: 'var(--ds-border-primary)' }} />
+          <span className="text-xs font-bold" style={{ color: 'var(--ds-text-primary)' }}>
+            {execution.workflowName.replace(/_/g, ' ')}
           </span>
-          <span className="rounded-full px-2 py-0.5 text-[10px] font-medium" style={{
-            backgroundColor: STATUS_COLORS[execution.status]?.glow,
-            color: STATUS_COLORS[execution.status]?.bg,
-          }}>
+          <span
+            className="rounded-full px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wide"
+            style={{
+              backgroundColor: STATUS_COLORS[execution.status]?.glow,
+              color: STATUS_COLORS[execution.status]?.bg,
+            }}
+          >
             {execution.status}
           </span>
-          <span className="text-[10px]" style={{ color: 'var(--ds-text-muted)' }}>
-            {execution.steps.length} steps • {formatDuration(execution.duration || 0)}
-          </span>
         </div>
-        <button
-          onClick={onClose}
-          className="rounded p-1 transition-colors hover:bg-white/10"
-          style={{ color: 'var(--ds-text-muted)' }}
-        >
-          <X className="h-4 w-4" />
-        </button>
+        <div className="flex items-center gap-3 text-[10px]" style={{ color: 'var(--ds-text-muted)' }}>
+          <span>{completedSteps}/{execution.steps.length} steps done</span>
+          {failedStep && (
+            <span className="text-red-400">⚠ Blocked at: {failedStep.name}</span>
+          )}
+          <span>{formatDuration(execution.duration || 0)}</span>
+        </div>
       </div>
 
-      {/* SVG canvas */}
-      <div className="flex flex-1 overflow-auto">
+      {/* Graph + sidebar */}
+      <div className="flex flex-1 overflow-hidden">
+        {/* SVG canvas */}
         <div className="flex-1 overflow-auto p-6">
-          <svg width={svgWidth} height={svgHeight} className="select-none">
+          <p className="text-[10px] mb-4" style={{ color: 'var(--ds-text-muted)' }}>
+            Click any step node to inspect its traces and evaluations →
+          </p>
+          <svg width={svgW} height={svgH} className="select-none">
+            <defs>
+              <filter id="glow" x="-50%" y="-50%" width="200%" height="200%">
+                <feGaussianBlur stdDeviation="3" result="blur" />
+                <feMerge><feMergeNode in="blur" /><feMergeNode in="SourceGraphic" /></feMerge>
+              </filter>
+              <filter id="nodeGlow" x="-20%" y="-20%" width="140%" height="140%">
+                <feGaussianBlur stdDeviation="5" result="blur" />
+                <feMerge><feMergeNode in="blur" /><feMergeNode in="SourceGraphic" /></feMerge>
+              </filter>
+            </defs>
+
             {/* Edges */}
             {edges.map(edge => {
-              const path = computeEdgePath(edge.from, edge.to);
+              const d = edgePath(edge.from, edge.to);
+              const color = edgeColor(edge.status);
               return (
                 <g key={edge.id}>
-                  {/* Edge shadow */}
-                  <path
-                    d={path}
-                    fill="none"
-                    stroke={edgeColor(edge.status)}
-                    strokeWidth={edge.status === 'active' ? 3 : 2}
-                    strokeLinecap="round"
-                    opacity={0.4}
-                    filter="url(#glow)"
-                  />
-                  {/* Edge path */}
-                  <path
-                    d={path}
-                    fill="none"
-                    stroke={edgeColor(edge.status)}
-                    strokeWidth={edge.status === 'active' ? 2.5 : 1.5}
-                    strokeLinecap="round"
-                    strokeDasharray={edge.status === 'pending' ? '4 4' : undefined}
-                  />
+                  <path d={d} fill="none" stroke={color} strokeWidth={edge.status === 'active' ? 3 : 2}
+                    strokeLinecap="round" opacity={0.3} filter="url(#glow)" />
+                  <path d={d} fill="none" stroke={color} strokeWidth={edge.status === 'active' ? 2.5 : 1.5}
+                    strokeLinecap="round" strokeDasharray={edge.status === 'pending' ? '4 4' : undefined} />
                 </g>
               );
             })}
 
             {/* Particles */}
-            {particles.map(particle => {
-              const edge = edges.find(e => e.id === particle.edgeId);
+            {particles.map(p => {
+              const edge = edges.find(e => e.id === p.edgeId);
               if (!edge) return null;
-              const path = computeEdgePath(edge.from, edge.to);
-              return (
-                <ParticleCircle
-                  key={particle.id}
-                  path={path}
-                  progress={particle.progress}
-                  color={edgeColor(edge.status)}
-                />
-              );
+              return <ParticleDot key={p.id} pathD={edgePath(edge.from, edge.to)} progress={p.progress} color={edgeColor(edge.status)} />;
             })}
-
-            {/* Glow filter */}
-            <defs>
-              <filter id="glow" x="-50%" y="-50%" width="200%" height="200%">
-                <feGaussianBlur stdDeviation="3" result="blur" />
-                <feMerge>
-                  <feMergeNode in="blur" />
-                  <feMergeNode in="SourceGraphic" />
-                </feMerge>
-              </filter>
-              <filter id="nodeGlow" x="-20%" y="-20%" width="140%" height="140%">
-                <feGaussianBlur stdDeviation="6" result="blur" />
-                <feMerge>
-                  <feMergeNode in="blur" />
-                  <feMergeNode in="SourceGraphic" />
-                </feMerge>
-              </filter>
-            </defs>
 
             {/* Nodes */}
             {nodes.map(node => {
               const colors = STATUS_COLORS[node.step.status] || STATUS_COLORS.pending;
-              const isHovered = hoveredNode === node.id;
-              const isSelected = selectedNode?.id === node.id;
+              const isInspected = inspectedStep?.id === node.id;
 
               return (
                 <g
                   key={node.id}
-                  onMouseEnter={() => setHoveredNode(node.id)}
-                  onMouseLeave={() => setHoveredNode(null)}
-                  onClick={() => setSelectedNode(isSelected ? null : node)}
+                  onClick={() => setInspectedStep(isInspected ? null : node.step)}
                   className="cursor-pointer"
                 >
-                  {/* Node glow */}
-                  {(isHovered || node.step.status === 'running') && (
-                    <rect
-                      x={node.x - 4}
-                      y={node.y - 4}
-                      width={NODE_WIDTH + 8}
-                      height={NODE_HEIGHT + 8}
-                      rx={14}
-                      fill={colors.glow}
-                      filter="url(#nodeGlow)"
-                      opacity={node.step.status === 'running' ? 0.6 : 0.4}
-                    />
+                  {/* Glow for running/selected */}
+                  {(node.step.status === 'running' || isInspected) && (
+                    <rect x={node.x - 4} y={node.y - 4} width={NODE_W + 8} height={NODE_H + 8}
+                      rx={14} fill={colors.glow} filter="url(#nodeGlow)" opacity={0.5} />
                   )}
-                  {/* Node background */}
-                  <rect
-                    x={node.x}
-                    y={node.y}
-                    width={NODE_WIDTH}
-                    height={NODE_HEIGHT}
-                    rx={10}
-                    fill="var(--ds-bg-tertiary)"
-                    stroke={isSelected ? colors.bg : colors.border}
-                    strokeWidth={isSelected ? 2 : 1}
-                  />
-                  {/* Status indicator bar */}
-                  <rect
-                    x={node.x}
-                    y={node.y}
-                    width={4}
-                    height={NODE_HEIGHT}
-                    rx={2}
-                    fill={colors.bg}
-                  />
-                  {/* Step name */}
-                  <text
-                    x={node.x + 16}
-                    y={node.y + 24}
-                    fontSize={11}
-                    fontWeight={600}
-                    fill="var(--ds-text-primary)"
-                    fontFamily="inherit"
-                  >
-                    {node.step.name.length > 18 ? node.step.name.slice(0, 16) + '…' : node.step.name}
+                  {/* Card */}
+                  <rect x={node.x} y={node.y} width={NODE_W} height={NODE_H} rx={10}
+                    fill="var(--ds-bg-tertiary)" stroke={isInspected ? colors.bg : colors.border}
+                    strokeWidth={isInspected ? 2.5 : 1} />
+                  {/* Left status bar */}
+                  <rect x={node.x} y={node.y + 10} width={4} height={NODE_H - 20} rx={2} fill={colors.bg} />
+                  {/* Name */}
+                  <text x={node.x + 16} y={node.y + 26} fontSize={12} fontWeight={600}
+                    fill="var(--ds-text-primary)" fontFamily="inherit">
+                    {node.step.name}
                   </text>
-                  {/* Duration + status */}
-                  <text
-                    x={node.x + 16}
-                    y={node.y + 44}
-                    fontSize={10}
-                    fill="var(--ds-text-muted)"
-                    fontFamily="inherit"
-                  >
-                    {node.step.status}{node.step.duration ? ` • ${formatDuration(node.step.duration)}` : ''}
+                  {/* Status + duration */}
+                  <text x={node.x + 16} y={node.y + 46} fontSize={10} fill="var(--ds-text-muted)" fontFamily="inherit">
+                    {node.step.status}{node.step.duration ? ` · ${formatDuration(node.step.duration)}` : ''}
+                    {node.step.cached ? ' ⚡' : ''}
                   </text>
                   {/* Retry badge */}
                   {node.step.retryCount > 0 && (
                     <>
-                      <circle cx={node.x + NODE_WIDTH - 16} cy={node.y + 14} r={9} fill="rgba(239,68,68,0.2)" />
-                      <text
-                        x={node.x + NODE_WIDTH - 16}
-                        y={node.y + 18}
-                        fontSize={9}
-                        fill="var(--ds-status-error)"
-                        textAnchor="middle"
-                        fontWeight={700}
-                        fontFamily="inherit"
-                      >
+                      <circle cx={node.x + NODE_W - 18} cy={node.y + 16} r={10}
+                        fill="rgba(239,68,68,0.15)" stroke="rgba(239,68,68,0.4)" strokeWidth={0.5} />
+                      <text x={node.x + NODE_W - 18} y={node.y + 20} fontSize={9}
+                        fill="var(--ds-status-error)" textAnchor="middle" fontWeight={700} fontFamily="inherit">
                         {node.step.retryCount}×
                       </text>
                     </>
-                  )}
-                  {/* Cached badge */}
-                  {node.step.cached && (
-                    <text
-                      x={node.x + NODE_WIDTH - 16}
-                      y={node.y + NODE_HEIGHT - 10}
-                      fontSize={8}
-                      fill="var(--ds-status-cached)"
-                      textAnchor="middle"
-                      fontFamily="inherit"
-                    >
-                      ⚡ cached
-                    </text>
                   )}
                 </g>
               );
@@ -509,17 +597,17 @@ function DetailFlowView({
           </svg>
         </div>
 
-        {/* Step detail sidebar */}
+        {/* Step inspector sidebar */}
         <AnimatePresence>
-          {selectedNode && (
+          {inspectedStep && (
             <motion.div
               initial={{ width: 0, opacity: 0 }}
-              animate={{ width: 320, opacity: 1 }}
+              animate={{ width: 300, opacity: 1 }}
               exit={{ width: 0, opacity: 0 }}
-              className="overflow-y-auto border-l"
+              className="overflow-y-auto border-l flex-shrink-0"
               style={{ borderColor: 'var(--ds-border-secondary)', backgroundColor: 'var(--ds-bg-secondary)' }}
             >
-              <StepDetailPanel step={selectedNode.step} onClose={() => setSelectedNode(null)} />
+              <StepInspector step={inspectedStep} onClose={() => setInspectedStep(null)} />
             </motion.div>
           )}
         </AnimatePresence>
@@ -528,51 +616,9 @@ function DetailFlowView({
   );
 }
 
-// --- Particle Circle using path interpolation ---
+// --- Step Inspector ---
 
-function ParticleCircle({ path, progress, color }: { path: string; progress: number; color: string }) {
-  const ref = useRef<SVGCircleElement>(null);
-  const pathRef = useRef<SVGPathElement | null>(null);
-
-  useEffect(() => {
-    if (!pathRef.current) {
-      // Create a temporary path element for length calculations
-      const svg = document.createElementNS('http://www.w3.org/2000/svg', 'svg');
-      const p = document.createElementNS('http://www.w3.org/2000/svg', 'path');
-      p.setAttribute('d', path);
-      svg.appendChild(p);
-      document.body.appendChild(svg);
-      pathRef.current = p;
-      document.body.removeChild(svg);
-    }
-  }, [path]);
-
-  // Compute position along path
-  const pathEl = useMemo(() => {
-    const p = document.createElementNS('http://www.w3.org/2000/svg', 'path');
-    p.setAttribute('d', path);
-    return p;
-  }, [path]);
-
-  const length = pathEl.getTotalLength();
-  const point = pathEl.getPointAtLength(progress * length);
-
-  return (
-    <circle
-      ref={ref}
-      cx={point.x}
-      cy={point.y}
-      r={3.5}
-      fill={color}
-      opacity={0.9}
-      filter="url(#glow)"
-    />
-  );
-}
-
-// --- Step Detail Panel ---
-
-function StepDetailPanel({ step, onClose }: { step: StepExecution; onClose: () => void }) {
+function StepInspector({ step, onClose }: { step: StepExecution; onClose: () => void }) {
   const colors = STATUS_COLORS[step.status] || STATUS_COLORS.pending;
 
   return (
@@ -584,23 +630,21 @@ function StepDetailPanel({ step, onClose }: { step: StepExecution; onClose: () =
         </button>
       </div>
 
-      {/* Status */}
+      {/* Status row */}
       <div className="flex items-center gap-2">
         {getStatusIcon(step.status, 'h-4 w-4')}
         <span className="text-xs font-medium capitalize" style={{ color: colors.bg }}>{step.status}</span>
         {step.duration && (
-          <span className="text-[10px] ml-auto" style={{ color: 'var(--ds-text-muted)' }}>
-            {formatDuration(step.duration)}
-          </span>
+          <span className="text-[10px] ml-auto" style={{ color: 'var(--ds-text-muted)' }}>{formatDuration(step.duration)}</span>
         )}
       </div>
 
-      {/* Retry info */}
+      {/* Retries */}
       {step.retryCount > 0 && (
-        <div className="flex items-center gap-2 rounded-lg p-2" style={{ backgroundColor: 'rgba(239,68,68,0.1)' }}>
+        <div className="flex items-center gap-2 rounded-lg p-2" style={{ backgroundColor: 'rgba(239,68,68,0.08)' }}>
           <RefreshCw className="h-3.5 w-3.5" style={{ color: 'var(--ds-status-error)' }} />
           <span className="text-xs" style={{ color: 'var(--ds-status-error)' }}>
-            Retried {step.retryCount} time{step.retryCount > 1 ? 's' : ''}
+            Retried {step.retryCount}×
           </span>
         </div>
       )}
@@ -610,19 +654,14 @@ function StepDetailPanel({ step, onClose }: { step: StepExecution; onClose: () =
         <h4 className="text-[10px] uppercase tracking-wider font-medium mb-2" style={{ color: 'var(--ds-text-muted)' }}>
           Traces ({step.traces.length})
         </h4>
-        <div className="space-y-1.5">
+        <div className="space-y-1">
           {step.traces.map(trace => (
-            <div
-              key={trace.id}
-              className="rounded-lg p-2 text-xs flex items-center gap-2"
-              style={{ backgroundColor: 'var(--ds-bg-tertiary)' }}
-            >
-              <span
-                className="w-1.5 h-1.5 rounded-full flex-shrink-0"
-                style={{ backgroundColor: trace.status === 'success' ? 'var(--ds-status-success)' : 'var(--ds-status-error)' }}
-              />
+            <div key={trace.id} className="rounded-lg p-2 text-xs flex items-center gap-2"
+              style={{ backgroundColor: 'var(--ds-bg-tertiary)' }}>
+              <span className="w-1.5 h-1.5 rounded-full flex-shrink-0"
+                style={{ backgroundColor: trace.status === 'success' ? 'var(--ds-status-success)' : 'var(--ds-status-error)' }} />
               <span className="truncate flex-1" style={{ color: 'var(--ds-text-secondary)' }}>{trace.name}</span>
-              <span style={{ color: 'var(--ds-text-muted)' }}>{trace.duration}ms</span>
+              <span className="text-[10px]" style={{ color: 'var(--ds-text-muted)' }}>{trace.duration}ms</span>
             </div>
           ))}
         </div>
@@ -636,11 +675,7 @@ function StepDetailPanel({ step, onClose }: { step: StepExecution; onClose: () =
           </h4>
           <div className="space-y-1.5">
             {step.evaluations.map(ev => (
-              <div
-                key={ev.id}
-                className="rounded-lg p-2 text-xs"
-                style={{ backgroundColor: 'var(--ds-bg-tertiary)' }}
-              >
+              <div key={ev.id} className="rounded-lg p-2.5 text-xs" style={{ backgroundColor: 'var(--ds-bg-tertiary)' }}>
                 <div className="flex items-center justify-between mb-1">
                   <span className="font-medium" style={{ color: 'var(--ds-text-secondary)' }}>{ev.evaluatorName}</span>
                   <span className={cn(
@@ -654,13 +689,10 @@ function StepDetailPanel({ step, onClose }: { step: StepExecution; onClose: () =
                 {ev.score != null && (
                   <div className="mt-1.5 flex items-center gap-2">
                     <div className="flex-1 h-1 rounded-full overflow-hidden" style={{ backgroundColor: 'var(--ds-bg-app)' }}>
-                      <div
-                        className="h-full rounded-full"
-                        style={{
-                          width: `${ev.score * 100}%`,
-                          backgroundColor: ev.score > 0.7 ? 'var(--ds-status-success)' : ev.score > 0.4 ? 'var(--ds-status-warning)' : 'var(--ds-status-error)',
-                        }}
-                      />
+                      <div className="h-full rounded-full" style={{
+                        width: `${ev.score * 100}%`,
+                        backgroundColor: ev.score > 0.7 ? 'var(--ds-status-success)' : ev.score > 0.4 ? 'var(--ds-status-warning)' : 'var(--ds-status-error)',
+                      }} />
                     </div>
                     <span className="text-[9px]" style={{ color: 'var(--ds-text-muted)' }}>{(ev.score * 100).toFixed(0)}%</span>
                   </div>
@@ -672,265 +704,4 @@ function StepDetailPanel({ step, onClose }: { step: StepExecution; onClose: () =
       )}
     </div>
   );
-}
-
-// --- Aggregate Flow View ---
-
-function AggregateFlowView({
-  data,
-  executions,
-  onSelectExecution,
-}: {
-  data: AggregateData;
-  executions: WorkflowExecution[];
-  onSelectExecution: (ex: WorkflowExecution | null) => void;
-}) {
-  const [hoveredStep, setHoveredStep] = useState<string | null>(null);
-
-  // Layout aggregate nodes
-  const COLS = Math.min(data.stepNames.length, 5);
-  const nodes = data.stepNames.map((name, i) => ({
-    name,
-    col: i % COLS,
-    row: Math.floor(i / COLS),
-    x: (i % COLS) * (NODE_WIDTH + H_GAP + 20) + 60,
-    y: Math.floor(i / COLS) * (NODE_HEIGHT + V_GAP + 60) + 60,
-    stats: data.stepStats.get(name)!,
-  }));
-
-  const svgWidth = Math.max(...nodes.map(n => n.x + NODE_WIDTH)) + 100;
-  const svgHeight = Math.max(...nodes.map(n => n.y + NODE_HEIGHT)) + 100;
-
-  // Build aggregate edges
-  const aggEdges = nodes.slice(0, -1).map((from, i) => {
-    const to = nodes[i + 1];
-    const successRate = from.stats.completed / from.stats.total;
-    return { from, to, successRate };
-  });
-
-  return (
-    <div className="flex flex-1 overflow-hidden">
-      {/* Graph */}
-      <div className="flex-1 overflow-auto p-6">
-        <svg width={svgWidth} height={svgHeight} className="select-none">
-          <defs>
-            <filter id="aggGlow" x="-50%" y="-50%" width="200%" height="200%">
-              <feGaussianBlur stdDeviation="4" result="blur" />
-              <feMerge>
-                <feMergeNode in="blur" />
-                <feMergeNode in="SourceGraphic" />
-              </feMerge>
-            </filter>
-            <linearGradient id="successGrad" x1="0" y1="0" x2="1" y2="0">
-              <stop offset="0%" stopColor="rgba(34,197,94,0.6)" />
-              <stop offset="100%" stopColor="rgba(34,197,94,0.3)" />
-            </linearGradient>
-          </defs>
-
-          {/* Edges */}
-          {aggEdges.map((edge, i) => {
-            const path = computeAggEdgePath(edge.from, edge.to);
-            const opacity = 0.3 + edge.successRate * 0.5;
-            const width = 1 + edge.successRate * 2;
-            return (
-              <g key={i}>
-                <path
-                  d={path}
-                  fill="none"
-                  stroke={`rgba(34,197,94,${opacity})`}
-                  strokeWidth={width}
-                  strokeLinecap="round"
-                />
-                {/* Flow arrow */}
-                <path
-                  d={path}
-                  fill="none"
-                  stroke={`rgba(34,197,94,${opacity * 0.5})`}
-                  strokeWidth={width + 4}
-                  strokeLinecap="round"
-                  filter="url(#aggGlow)"
-                />
-              </g>
-            );
-          })}
-
-          {/* Nodes */}
-          {nodes.map((node, i) => {
-            const isHovered = hoveredStep === node.name;
-            const successRate = node.stats.completed / node.stats.total;
-            const failRate = node.stats.failed / node.stats.total;
-
-            return (
-              <g
-                key={node.name}
-                onMouseEnter={() => setHoveredStep(node.name)}
-                onMouseLeave={() => setHoveredStep(null)}
-                className="cursor-pointer"
-              >
-                {/* Glow on hover */}
-                {isHovered && (
-                  <rect
-                    x={node.x - 4}
-                    y={node.y - 4}
-                    width={NODE_WIDTH + 8}
-                    height={NODE_HEIGHT + 28}
-                    rx={14}
-                    fill="rgba(139,92,246,0.1)"
-                    filter="url(#aggGlow)"
-                  />
-                )}
-                {/* Card */}
-                <rect
-                  x={node.x}
-                  y={node.y}
-                  width={NODE_WIDTH}
-                  height={NODE_HEIGHT + 20}
-                  rx={10}
-                  fill="var(--ds-bg-tertiary)"
-                  stroke={isHovered ? 'rgba(139,92,246,0.5)' : 'var(--ds-border-primary)'}
-                  strokeWidth={isHovered ? 1.5 : 1}
-                />
-                {/* Success rate bar */}
-                <rect
-                  x={node.x + 8}
-                  y={node.y + NODE_HEIGHT + 6}
-                  width={(NODE_WIDTH - 16) * successRate}
-                  height={4}
-                  rx={2}
-                  fill="var(--ds-status-success)"
-                  opacity={0.8}
-                />
-                {failRate > 0 && (
-                  <rect
-                    x={node.x + 8 + (NODE_WIDTH - 16) * successRate}
-                    y={node.y + NODE_HEIGHT + 6}
-                    width={(NODE_WIDTH - 16) * failRate}
-                    height={4}
-                    rx={2}
-                    fill="var(--ds-status-error)"
-                    opacity={0.8}
-                  />
-                )}
-                <rect
-                  x={node.x + 8}
-                  y={node.y + NODE_HEIGHT + 6}
-                  width={NODE_WIDTH - 16}
-                  height={4}
-                  rx={2}
-                  fill="var(--ds-text-muted)"
-                  opacity={0.1}
-                />
-                {/* Step name */}
-                <text
-                  x={node.x + 12}
-                  y={node.y + 22}
-                  fontSize={11}
-                  fontWeight={600}
-                  fill="var(--ds-text-primary)"
-                  fontFamily="inherit"
-                >
-                  {node.name.length > 18 ? node.name.slice(0, 16) + '…' : node.name}
-                </text>
-                {/* Stats row */}
-                <text
-                  x={node.x + 12}
-                  y={node.y + 40}
-                  fontSize={10}
-                  fill="var(--ds-text-muted)"
-                  fontFamily="inherit"
-                >
-                  {(successRate * 100).toFixed(0)}% pass • {formatDuration(node.stats.avgDuration)} avg
-                </text>
-                {/* Count */}
-                <text
-                  x={node.x + 12}
-                  y={node.y + 56}
-                  fontSize={9}
-                  fill="var(--ds-text-muted)"
-                  fontFamily="inherit"
-                  opacity={0.6}
-                >
-                  {node.stats.total} runs • {node.stats.cached} cached
-                </text>
-                {/* Step number badge */}
-                <circle cx={node.x + NODE_WIDTH - 14} cy={node.y + 14} r={10} fill="var(--ds-bg-app)" stroke="var(--ds-border-primary)" strokeWidth={1} />
-                <text
-                  x={node.x + NODE_WIDTH - 14}
-                  y={node.y + 18}
-                  fontSize={9}
-                  fill="var(--ds-text-muted)"
-                  textAnchor="middle"
-                  fontWeight={600}
-                  fontFamily="inherit"
-                >
-                  {i + 1}
-                </text>
-              </g>
-            );
-          })}
-        </svg>
-      </div>
-
-      {/* Recent executions sidebar */}
-      <div
-        className="w-72 overflow-y-auto border-l"
-        style={{ borderColor: 'var(--ds-border-secondary)', backgroundColor: 'var(--ds-bg-secondary)' }}
-      >
-        <div className="p-3 border-b" style={{ borderColor: 'var(--ds-border-secondary)' }}>
-          <h3 className="text-xs font-semibold" style={{ color: 'var(--ds-text-primary)' }}>
-            Recent Runs
-          </h3>
-          <p className="text-[10px] mt-0.5" style={{ color: 'var(--ds-text-muted)' }}>
-            Click to inspect flow
-          </p>
-        </div>
-        <div className="space-y-0.5 p-1.5">
-          {executions.slice(0, 30).map(ex => (
-            <button
-              key={ex.id}
-              onClick={() => onSelectExecution(ex)}
-              className="w-full rounded-lg p-2.5 text-left transition-all hover:bg-white/5 flex items-center gap-2"
-            >
-              <span
-                className="w-2 h-2 rounded-full flex-shrink-0"
-                style={{
-                  backgroundColor: STATUS_COLORS[ex.status]?.bg || 'var(--ds-text-muted)',
-                }}
-              />
-              <div className="flex-1 min-w-0">
-                <p className="text-[11px] font-medium truncate" style={{ color: 'var(--ds-text-secondary)' }}>
-                  {ex.id.slice(0, 12)}
-                </p>
-                <p className="text-[9px]" style={{ color: 'var(--ds-text-muted)' }}>
-                  {ex.steps.filter(s => s.status === 'completed' || s.status === 'cached').length}/{ex.steps.length} steps • {formatDuration(ex.duration || 0)}
-                </p>
-              </div>
-              <ChevronRight className="h-3 w-3 flex-shrink-0" style={{ color: 'var(--ds-text-muted)' }} />
-            </button>
-          ))}
-        </div>
-      </div>
-    </div>
-  );
-}
-
-function computeAggEdgePath(from: { x: number; y: number }, to: { x: number; y: number }): string {
-  const COLS = 5;
-  if (from.y === to.y) {
-    // Same row
-    const x1 = from.x + NODE_WIDTH;
-    const y1 = from.y + (NODE_HEIGHT + 20) / 2;
-    const x2 = to.x;
-    const y2 = to.y + (NODE_HEIGHT + 20) / 2;
-    const cx1 = x1 + (x2 - x1) * 0.4;
-    const cx2 = x1 + (x2 - x1) * 0.6;
-    return `M ${x1} ${y1} C ${cx1} ${y1}, ${cx2} ${y2}, ${x2} ${y2}`;
-  }
-  // Different row
-  const x1 = from.x + NODE_WIDTH / 2;
-  const y1 = from.y + NODE_HEIGHT + 20;
-  const x2 = to.x + NODE_WIDTH / 2;
-  const y2 = to.y;
-  const midY = (y1 + y2) / 2;
-  return `M ${x1} ${y1} C ${x1} ${midY}, ${x2} ${midY}, ${x2} ${y2}`;
 }
