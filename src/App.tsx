@@ -6,6 +6,7 @@ import {
 } from 'lucide-react';
 import { useWorkflowData } from '@/hooks/useWorkflowData';
 import { useDesignSystem } from '@/design-system';
+import { HeroSection } from '@/components/dashboard/HeroSection';
 import { ExecutionList } from '@/components/dashboard/ExecutionList';
 import { ExecutionDetail } from '@/components/dashboard/ExecutionDetail';
 import { TimelineView } from '@/components/timeline/TimelineView';
@@ -44,9 +45,18 @@ export function App() {
   const { theme, density } = useDesignSystem();
   const [filterOpen, setFilterOpen] = useState(false);
   const [settingsOpen, setSettingsOpen] = useState(false);
+  const [showHero, setShowHero] = useState(true);
 
   const runningCount = allExecutions.filter(e => e.status === 'running').length;
   const failedCount = allExecutions.filter(e => e.status === 'failed').length;
+
+  if (showHero) {
+    return (
+      <div className="h-screen" style={{ backgroundColor: 'var(--ds-bg-app)' }}>
+        <HeroSection onEnter={() => setShowHero(false)} />
+      </div>
+    );
+  }
 
   return (
     <div
