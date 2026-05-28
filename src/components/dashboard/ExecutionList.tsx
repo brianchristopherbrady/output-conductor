@@ -104,7 +104,7 @@ export function ExecutionList({ executions, selectedId, onSelect }: ExecutionLis
   const parentRef = useRef<HTMLDivElement>(null);
   const { density } = useDesignSystem();
 
-  const rowHeight = density === 'compact' ? 82 : density === 'spacious' ? 152 : 116;
+  const rowHeight = density === 'compact' ? 66 : density === 'spacious' ? 110 : 88;
 
   const virtualizer = useVirtualizer({
     count: executions.length,
@@ -113,7 +113,7 @@ export function ExecutionList({ executions, selectedId, onSelect }: ExecutionLis
     overscan: 10,
   });
 
-  const listGap = density === 'compact' ? '2px 4px' : density === 'spacious' ? '6px 8px' : '4px 6px';
+  const listGap = density === 'compact' ? '1px 4px' : density === 'spacious' ? '4px 6px' : '2px 4px';
 
   return (
     <div

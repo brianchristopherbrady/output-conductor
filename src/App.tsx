@@ -17,10 +17,10 @@ import { ViewMode } from '@/types';
 import { cn, formatCost, formatTokens, formatDuration } from '@/utils';
 
 const NAV_ITEMS: { id: ViewMode; label: string; icon: React.ReactNode }[] = [
-  { id: 'dashboard', label: 'Executions', icon: <LayoutDashboard className="h-5 w-5" /> },
-  { id: 'timeline', label: 'Timeline', icon: <GitBranch className="h-5 w-5" /> },
-  { id: 'traces', label: 'Traces', icon: <Activity className="h-5 w-5" /> },
-  { id: 'analytics', label: 'Analytics', icon: <BarChart3 className="h-5 w-5" /> },
+  { id: 'dashboard', label: 'Executions', icon: <LayoutDashboard className="h-3.5 w-3.5" /> },
+  { id: 'timeline', label: 'Timeline', icon: <GitBranch className="h-3.5 w-3.5" /> },
+  { id: 'traces', label: 'Traces', icon: <Activity className="h-3.5 w-3.5" /> },
+  { id: 'analytics', label: 'Analytics', icon: <BarChart3 className="h-3.5 w-3.5" /> },
 ];
 
 export function App() {
@@ -79,42 +79,50 @@ export function App() {
       >
         <div className="flex items-center justify-between">
           <div className="flex items-center gap-4">
-            <div className="flex items-center gap-3">
-              <div className="rounded-xl bg-gradient-to-br from-conductor-500 to-conductor-700 p-2.5 shadow-lg shadow-conductor-500/20">
-                <Workflow className="h-6 w-6 text-white" />
+            <div className="flex items-center gap-2.5">
+              <div className="rounded-lg bg-gradient-to-br from-conductor-500 to-conductor-700 p-1.5 shadow-md shadow-conductor-500/20">
+                <Workflow className="h-4 w-4 text-white" />
               </div>
               <div>
-                <h1 className="text-xl font-bold tracking-tight" style={{ color: 'var(--ds-text-primary)' }}>Conductor</h1>
-                <p className="text-sm" style={{ color: 'var(--ds-text-muted)' }}>Workflow Observatory for Output.ai</p>
+                <h1 className="text-sm font-bold tracking-tight" style={{ color: 'var(--ds-text-primary)' }}>Conductor</h1>
+                <p className="text-xs" style={{ color: 'var(--ds-text-muted)' }}>Output.ai Workflow Observatory</p>
               </div>
             </div>
           </div>
 
           {/* Search + filter + settings */}
-          <div className="flex items-center gap-3">
+          <div className="flex items-center gap-2">
             <div className="relative">
-              <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-zinc-500" />
+              <Search className="absolute left-2.5 top-1/2 h-3.5 w-3.5 -translate-y-1/2 text-zinc-500" />
               <input
                 type="text"
                 placeholder="Search workflows..."
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
-                className="h-10 w-64 rounded-xl border border-zinc-700 bg-zinc-900 pl-10 pr-4 text-sm text-zinc-200 placeholder:text-zinc-600 focus:border-conductor-500/50 focus:outline-none focus:ring-2 focus:ring-conductor-500/20 transition-all"
+                className="rounded-lg border pl-8 pr-3 text-xs placeholder:text-zinc-600 focus:outline-none focus:ring-1 focus:ring-conductor-500/20 transition-all"
+                style={{
+                  height: 'var(--ds-input-height)',
+                  width: '200px',
+                  borderColor: 'var(--ds-input-border)',
+                  backgroundColor: 'var(--ds-input-bg)',
+                  color: 'var(--ds-text-primary)',
+                }}
               />
             </div>
             <div className="relative">
               <button
                 onClick={() => setFilterOpen(!filterOpen)}
                 className={cn(
-                  'flex items-center gap-2 rounded-xl border px-4 py-2.5 text-sm font-medium transition-all',
+                  'flex items-center gap-1.5 rounded-lg border px-3 py-1.5 text-xs font-medium transition-all',
                   filterOpen
                     ? 'border-conductor-500/40 bg-conductor-500/10 text-conductor-300'
-                    : 'border-zinc-700 text-zinc-400 hover:text-zinc-200 hover:border-zinc-600',
+                    : 'text-zinc-400 hover:text-zinc-200',
                 )}
+                style={{ borderColor: filterOpen ? undefined : 'var(--ds-input-border)' }}
               >
-                <Filter className="h-4 w-4" />
+                <Filter className="h-3.5 w-3.5" />
                 Filters
-                <ChevronDown className={cn('h-4 w-4 transition-transform', filterOpen && 'rotate-180')} />
+                <ChevronDown className={cn('h-3 w-3 transition-transform', filterOpen && 'rotate-180')} />
               </button>
 
               <AnimatePresence>
@@ -162,7 +170,7 @@ export function App() {
             {/* Settings button */}
             <button
               onClick={() => setSettingsOpen(true)}
-              className="rounded-xl border p-2.5 transition-all hover:opacity-80"
+              className="rounded-lg border p-1.5 transition-all hover:opacity-80"
               style={{
                 borderColor: 'var(--ds-border-primary)',
                 color: 'var(--ds-text-tertiary)',
@@ -170,49 +178,49 @@ export function App() {
               }}
               title="Appearance settings"
             >
-              <Settings className="h-5 w-5" />
+              <Settings className="h-4 w-4" />
             </button>
           </div>
         </div>
 
         {/* Stats bar + Nav */}
-        <div className="mt-4 flex items-center justify-between">
+        <div className="mt-2.5 flex items-center justify-between">
           {/* Quick stats */}
-          <div className="flex items-center gap-6">
-            <div className="flex items-center gap-2">
-              <CheckCircle2 className="h-4 w-4" style={{ color: 'var(--ds-status-success)' }} />
-              <span className="text-sm" style={{ color: 'var(--ds-text-secondary)' }}>
-                <span className="font-semibold" style={{ color: 'var(--ds-status-success)' }}>{(stats.successRate * 100).toFixed(0)}%</span> success rate
+          <div className="flex items-center gap-4">
+            <div className="flex items-center gap-1.5">
+              <CheckCircle2 className="h-3.5 w-3.5" style={{ color: 'var(--ds-status-success)' }} />
+              <span className="text-xs" style={{ color: 'var(--ds-text-secondary)' }}>
+                <span className="font-semibold" style={{ color: 'var(--ds-status-success)' }}>{(stats.successRate * 100).toFixed(0)}%</span> success
               </span>
             </div>
-            <div className="flex items-center gap-2">
-              <Loader2 className={cn("h-4 w-4", runningCount > 0 && "animate-spin")} style={{ color: 'var(--ds-status-info)' }} />
-              <span className="text-sm" style={{ color: 'var(--ds-text-secondary)' }}>
+            <div className="flex items-center gap-1.5">
+              <Loader2 className={cn("h-3.5 w-3.5", runningCount > 0 && "animate-spin")} style={{ color: 'var(--ds-status-info)' }} />
+              <span className="text-xs" style={{ color: 'var(--ds-text-secondary)' }}>
                 <span className="font-semibold" style={{ color: 'var(--ds-status-info)' }}>{runningCount}</span> running
               </span>
             </div>
-            <div className="flex items-center gap-2">
-              <XCircle className="h-4 w-4" style={{ color: 'var(--ds-status-error)' }} />
-              <span className="text-sm" style={{ color: 'var(--ds-text-secondary)' }}>
+            <div className="flex items-center gap-1.5">
+              <XCircle className="h-3.5 w-3.5" style={{ color: 'var(--ds-status-error)' }} />
+              <span className="text-xs" style={{ color: 'var(--ds-text-secondary)' }}>
                 <span className="font-semibold" style={{ color: 'var(--ds-status-error)' }}>{failedCount}</span> failed
               </span>
             </div>
-            <div className="h-4 w-px" style={{ backgroundColor: 'var(--ds-border-primary)' }} />
-            <div className="flex items-center gap-2">
-              <DollarSign className="h-4 w-4" style={{ color: 'var(--ds-text-muted)' }} />
-              <span className="text-sm" style={{ color: 'var(--ds-text-tertiary)' }}>
-                {formatCost(stats.totalCost)} spent
+            <div className="h-3 w-px" style={{ backgroundColor: 'var(--ds-border-primary)' }} />
+            <div className="flex items-center gap-1.5">
+              <DollarSign className="h-3.5 w-3.5" style={{ color: 'var(--ds-text-muted)' }} />
+              <span className="text-xs" style={{ color: 'var(--ds-text-tertiary)' }}>
+                {formatCost(stats.totalCost)}
               </span>
             </div>
-            <div className="flex items-center gap-2">
-              <Zap className="h-4 w-4" style={{ color: 'var(--ds-text-muted)' }} />
-              <span className="text-sm" style={{ color: 'var(--ds-text-tertiary)' }}>
-                {formatTokens(stats.totalTokens)} tokens
+            <div className="flex items-center gap-1.5">
+              <Zap className="h-3.5 w-3.5" style={{ color: 'var(--ds-text-muted)' }} />
+              <span className="text-xs" style={{ color: 'var(--ds-text-tertiary)' }}>
+                {formatTokens(stats.totalTokens)}
               </span>
             </div>
-            <div className="flex items-center gap-2">
-              <Clock className="h-4 w-4" style={{ color: 'var(--ds-text-muted)' }} />
-              <span className="text-sm" style={{ color: 'var(--ds-text-tertiary)' }}>
+            <div className="flex items-center gap-1.5">
+              <Clock className="h-3.5 w-3.5" style={{ color: 'var(--ds-text-muted)' }} />
+              <span className="text-xs" style={{ color: 'var(--ds-text-tertiary)' }}>
                 ~{formatDuration(stats.avgDuration)} avg
               </span>
             </div>
@@ -220,14 +228,14 @@ export function App() {
 
           {/* Nav tabs */}
           <nav
-            className="flex items-center gap-1 rounded-xl border p-1"
+            className="flex items-center gap-0.5 rounded-lg border p-0.5"
             style={{ backgroundColor: 'var(--ds-nav-bg)', borderColor: 'var(--ds-border-secondary)' }}
           >
             {NAV_ITEMS.map(item => (
               <button
                 key={item.id}
                 onClick={() => setViewMode(item.id)}
-                className="flex items-center gap-2 rounded-lg px-4 py-2 text-sm font-medium transition-all"
+                className="flex items-center gap-1.5 rounded-md px-3 py-1.5 text-xs font-medium transition-all"
                 style={{
                   backgroundColor: viewMode === item.id ? 'var(--ds-nav-active)' : 'transparent',
                   color: viewMode === item.id ? 'var(--ds-nav-active-text)' : 'var(--ds-text-muted)',
