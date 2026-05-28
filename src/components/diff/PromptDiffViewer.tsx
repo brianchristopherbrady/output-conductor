@@ -40,16 +40,18 @@ function getExecutionLabel(execution: WorkflowExecution): string {
 
 function getLineStyle(kind?: DiffKind) {
   if (kind === 'added') {
+    // Blue tint for "only in Run B" (not green — green implies "good")
     return {
-      backgroundColor: 'color-mix(in srgb, var(--ds-status-success) 16%, var(--ds-bg-tertiary))',
-      borderLeft: '3px solid var(--ds-status-success)',
+      backgroundColor: 'rgba(59, 130, 246, 0.12)',
+      borderLeft: '3px solid rgba(59, 130, 246, 0.7)',
     };
   }
 
   if (kind === 'removed') {
+    // Amber/orange tint for "only in Run A" (not red — red implies "error")
     return {
-      backgroundColor: 'color-mix(in srgb, var(--ds-status-error) 16%, var(--ds-bg-tertiary))',
-      borderLeft: '3px solid var(--ds-status-error)',
+      backgroundColor: 'rgba(245, 158, 11, 0.12)',
+      borderLeft: '3px solid rgba(245, 158, 11, 0.7)',
     };
   }
 
@@ -501,6 +503,52 @@ export function PromptDiffViewer({ executions }: PromptDiffViewerProps) {
           </select>
         </label>
       </div>
+
+      {/* Mini pipeline flow showing where you are */}
+      {runA && sharedStepNames.length > 0 && (
+        <div className="rounded-lg border p-3" style={{ backgroundColor: 'var(--ds-bg-secondary)', borderColor: 'var(--ds-border-primary)' }}>
+          <div className="flex items-center gap-1.5 mb-2">
+            <span className="text-[10px] uppercase tracking-wider font-medium" style={{ color: 'var(--ds-text-muted)' }}>
+              Pipeline: {runA.workflowName.replace(/_/g, ' ')}
+            </span>
+          </div>
+          <div className="flex items-center gap-1 flex-wrap">
+            {runA.steps.map((step, i) => {
+              const isSelected = step.name === selectedStepName;
+              const isShared = sharedStepNames.includes(step.name);
+              return (
+                <div key={step.id} className="flex items-center gap-1">
+                  <button
+                    onClick={() => isShared && setSelectedStepName(step.name)}
+                    className={`rounded-md px-2.5 py-1 text-[11px] font-medium transition-all ${isShared ? 'cursor-pointer' : 'cursor-default opacity-40'}`}
+                    style={{
+                      backgroundColor: isSelected ? 'rgba(139, 92, 246, 0.2)' : 'var(--ds-bg-tertiary)',
+                      color: isSelected ? 'rgb(167, 139, 250)' : 'var(--ds-text-secondary)',
+                      border: isSelected ? '1px solid rgba(139, 92, 246, 0.4)' : '1px solid var(--ds-border-primary)',
+                    }}
+                  >
+                    {step.name}
+                  </button>
+                  {i < runA.steps.length - 1 && (
+                    <span className="text-[10px]" style={{ color: 'var(--ds-text-muted)' }}>→</span>
+                  )}
+                </div>
+              );
+            })}
+          </div>
+          <div className="flex items-center gap-3 mt-2 text-[10px]" style={{ color: 'var(--ds-text-muted)' }}>
+            <span className="flex items-center gap-1">
+              <span className="w-2 h-2 rounded-sm" style={{ backgroundColor: 'rgba(245, 158, 11, 0.7)' }} /> Only in Run A
+            </span>
+            <span className="flex items-center gap-1">
+              <span className="w-2 h-2 rounded-sm" style={{ backgroundColor: 'rgba(59, 130, 246, 0.7)' }} /> Only in Run B
+            </span>
+            <span className="flex items-center gap-1">
+              <span className="w-2 h-2 rounded-sm" style={{ backgroundColor: 'rgba(139, 92, 246, 0.4)', border: '1px solid rgba(139,92,246,0.6)' }} /> Selected step
+            </span>
+          </div>
+        </div>
+      )}
 
       {noCompatibleRuns ? (
         <div
