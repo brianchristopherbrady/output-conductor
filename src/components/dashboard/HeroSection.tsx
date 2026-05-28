@@ -29,24 +29,39 @@ export function HeroSection({ onEnter }: HeroSectionProps) {
           animate={{ scale: [1, 1.1, 1], opacity: [0.5, 0.8, 0.5] }}
           transition={{ duration: 4, repeat: Infinity, ease: 'easeInOut' }}
         />
-        {/* Floating orbs */}
-        {[...Array(5)].map((_, i) => (
+        {/* Floating orbs — scattered randomly with organic drift */}
+        {[
+          { size: 80, x: 8, y: 12, dx: 40, dy: -60, duration: 8 },
+          { size: 50, x: 75, y: 20, dx: -30, dy: 45, duration: 10 },
+          { size: 120, x: 60, y: 70, dx: 50, dy: -35, duration: 12 },
+          { size: 35, x: 20, y: 65, dx: -25, dy: -50, duration: 7 },
+          { size: 65, x: 85, y: 55, dx: -45, dy: 30, duration: 9 },
+          { size: 40, x: 40, y: 85, dx: 35, dy: -40, duration: 11 },
+          { size: 90, x: 15, y: 35, dx: 20, dy: 55, duration: 13 },
+        ].map((orb, i) => (
           <motion.div
             key={i}
             className="absolute rounded-full"
             style={{
-              width: `${20 + i * 15}px`,
-              height: `${20 + i * 15}px`,
+              width: `${orb.size}px`,
+              height: `${orb.size}px`,
               background: `var(--ds-accent-primary)`,
-              opacity: 0.06 + i * 0.02,
-              top: `${15 + i * 18}%`,
-              left: `${10 + i * 20}%`,
+              opacity: 0.04 + (i % 3) * 0.02,
+              top: `${orb.y}%`,
+              left: `${orb.x}%`,
+              filter: 'blur(1px)',
             }}
             animate={{
-              y: [0, -20, 0],
-              x: [0, 10, 0],
+              x: [0, orb.dx, -orb.dx * 0.5, 0],
+              y: [0, orb.dy, -orb.dy * 0.7, 0],
+              scale: [1, 1.15, 0.9, 1],
             }}
-            transition={{ duration: 3 + i, repeat: Infinity, ease: 'easeInOut', delay: i * 0.5 }}
+            transition={{
+              duration: orb.duration,
+              repeat: Infinity,
+              ease: 'easeInOut',
+              delay: i * 0.8,
+            }}
           />
         ))}
       </div>

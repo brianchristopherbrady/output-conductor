@@ -104,7 +104,7 @@ export function ExecutionList({ executions, selectedId, onSelect }: ExecutionLis
   const parentRef = useRef<HTMLDivElement>(null);
   const { density } = useDesignSystem();
 
-  const rowHeight = density === 'compact' ? 76 : density === 'spacious' ? 136 : 112;
+  const rowHeight = density === 'compact' ? 82 : density === 'spacious' ? 152 : 116;
 
   const virtualizer = useVirtualizer({
     count: executions.length,
@@ -112,6 +112,8 @@ export function ExecutionList({ executions, selectedId, onSelect }: ExecutionLis
     estimateSize: () => rowHeight,
     overscan: 10,
   });
+
+  const listGap = density === 'compact' ? '2px 4px' : density === 'spacious' ? '6px 8px' : '4px 6px';
 
   return (
     <div
@@ -139,7 +141,7 @@ export function ExecutionList({ executions, selectedId, onSelect }: ExecutionLis
                 transform: `translateY(${virtualItem.start}px)`,
               }}
             >
-              <div className="px-2 py-1">
+              <div style={{ padding: listGap }}>
                 <ExecutionRow
                   execution={execution}
                   isSelected={execution.id === selectedId}
