@@ -2,7 +2,7 @@ import { useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import {
   LayoutDashboard, GitBranch, Activity, BarChart3, Search,
-  Filter, ChevronDown, Workflow, CheckCircle2, XCircle, Loader2, DollarSign, Zap, Clock, Settings,
+  Filter, ChevronDown, Workflow, CheckCircle2, XCircle, Loader2, DollarSign, Zap, Clock, Settings, Route,
 } from 'lucide-react';
 import { useWorkflowData } from '@/hooks/useWorkflowData';
 import { useDesignSystem } from '@/design-system';
@@ -13,11 +13,13 @@ import { TimelineView } from '@/components/timeline/TimelineView';
 import { TracesView } from '@/components/traces/TracesView';
 import { AnalyticsPanel } from '@/components/analytics/AnalyticsPanel';
 import { SettingsPanel } from '@/components/settings/SettingsPanel';
+import { FlowGraph } from '@/components/flow/FlowGraph';
 import { ViewMode } from '@/types';
 import { cn, formatCost, formatTokens, formatDuration } from '@/utils';
 
 const NAV_ITEMS: { id: ViewMode; label: string; icon: React.ReactNode }[] = [
   { id: 'dashboard', label: 'Executions', icon: <LayoutDashboard className="h-3.5 w-3.5" /> },
+  { id: 'flow', label: 'Flow', icon: <Route className="h-3.5 w-3.5" /> },
   { id: 'timeline', label: 'Timeline', icon: <GitBranch className="h-3.5 w-3.5" /> },
   { id: 'traces', label: 'Traces', icon: <Activity className="h-3.5 w-3.5" /> },
   { id: 'analytics', label: 'Analytics', icon: <BarChart3 className="h-3.5 w-3.5" /> },
@@ -336,6 +338,22 @@ export function App() {
               className="flex-1 overflow-hidden"
             >
               <AnalyticsPanel executions={allExecutions} costData={costData} stats={stats} />
+            </motion.div>
+          )}
+
+          {viewMode === 'flow' && (
+            <motion.div
+              key="flow"
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              exit={{ opacity: 0 }}
+              className="flex-1 overflow-hidden"
+            >
+              <FlowGraph
+                executions={executions}
+                selectedExecution={selectedExecution}
+                onSelectExecution={selectExecution}
+              />
             </motion.div>
           )}
         </AnimatePresence>
