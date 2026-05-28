@@ -24,12 +24,15 @@
 
 @layer base {
   * {
-    @apply border-zinc-800;
+    border-color: var(--ds-border-secondary, #27272a);
   }
 
   body {
-    @apply bg-zinc-950 text-zinc-100;
+    background-color: var(--ds-bg-app, #09090b);
+    color: var(--ds-text-primary, #fafafa);
     font-feature-settings: "cv02", "cv03", "cv04", "cv11";
+    font-size: var(--ds-font-size, 14px);
+    transition: background-color 0.2s ease, color 0.2s ease;
   }
 
   ::-webkit-scrollbar {
@@ -38,14 +41,16 @@
   }
 
   ::-webkit-scrollbar-track {
-    @apply bg-transparent;
+    background: var(--ds-scrollbar-track, transparent);
   }
 
   ::-webkit-scrollbar-thumb {
-    @apply bg-zinc-700 rounded-full;
+    background: var(--ds-scrollbar-thumb, #52525b);
+    border-radius: 9999px;
   }
 
   ::-webkit-scrollbar-thumb:hover {
-    @apply bg-zinc-600;
+    opacity: 0.8;
   }
 }
+

@@ -2,14 +2,16 @@ import { useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import {
   LayoutDashboard, GitBranch, Activity, BarChart3, Search,
-  Filter, ChevronDown, Workflow, CheckCircle2, XCircle, Loader2, DollarSign, Zap, Clock,
+  Filter, ChevronDown, Workflow, CheckCircle2, XCircle, Loader2, DollarSign, Zap, Clock, Settings,
 } from 'lucide-react';
 import { useWorkflowData } from '@/hooks/useWorkflowData';
+import { useDesignSystem } from '@/design-system';
 import { ExecutionList } from '@/components/dashboard/ExecutionList';
 import { ExecutionDetail } from '@/components/dashboard/ExecutionDetail';
 import { TimelineView } from '@/components/timeline/TimelineView';
 import { TracesView } from '@/components/traces/TracesView';
 import { AnalyticsPanel } from '@/components/analytics/AnalyticsPanel';
+import { SettingsPanel } from '@/components/settings/SettingsPanel';
 import { ViewMode } from '@/types';
 import { cn, formatCost, formatTokens, formatDuration } from '@/utils';
 
@@ -39,15 +41,32 @@ export function App() {
     workflowNames,
   } = useWorkflowData();
 
+  const { theme, density } = useDesignSystem();
   const [filterOpen, setFilterOpen] = useState(false);
+  const [settingsOpen, setSettingsOpen] = useState(false);
 
   const runningCount = allExecutions.filter(e => e.status === 'running').length;
   const failedCount = allExecutions.filter(e => e.status === 'failed').length;
 
   return (
-    <div className="flex h-screen flex-col overflow-hidden">
+    <div
+      className="flex h-screen flex-col overflow-hidden transition-colors duration-200"
+      style={{ backgroundColor: 'var(--ds-bg-app)', color: 'var(--ds-text-primary)' }}
+    >
+      {/* Settings modal */}
+      <AnimatePresence>
+        {settingsOpen && <SettingsPanel onClose={() => setSettingsOpen(false)} />}
+      </AnimatePresence>
+
       {/* Top bar */}
-      <header className="border-b border-zinc-800 bg-zinc-950/90 backdrop-blur-xl px-6 py-4">
+      <header
+        className="border-b backdrop-blur-xl"
+        style={{
+          borderColor: 'var(--ds-border-secondary)',
+          backgroundColor: 'var(--ds-bg-app)',
+          padding: `var(--ds-header-padding)`,
+        }}
+      >
         <div className="flex items-center justify-between">
           <div className="flex items-center gap-4">
             <div className="flex items-center gap-3">
@@ -55,13 +74,13 @@ export function App() {
                 <Workflow className="h-6 w-6 text-white" />
               </div>
               <div>
-                <h1 className="text-xl font-bold tracking-tight text-zinc-50">Conductor</h1>
-                <p className="text-sm text-zinc-500">Workflow Observatory for Output.ai</p>
+                <h1 className="text-xl font-bold tracking-tight" style={{ color: 'var(--ds-text-primary)' }}>Conductor</h1>
+                <p className="text-sm" style={{ color: 'var(--ds-text-muted)' }}>Workflow Observatory for Output.ai</p>
               </div>
             </div>
           </div>
 
-          {/* Search + filter */}
+          {/* Search + filter + settings */}
           <div className="flex items-center gap-3">
             <div className="relative">
               <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-zinc-500" />
@@ -129,6 +148,20 @@ export function App() {
                 )}
               </AnimatePresence>
             </div>
+
+            {/* Settings button */}
+            <button
+              onClick={() => setSettingsOpen(true)}
+              className="rounded-xl border p-2.5 transition-all hover:opacity-80"
+              style={{
+                borderColor: 'var(--ds-border-primary)',
+                color: 'var(--ds-text-tertiary)',
+                backgroundColor: 'var(--ds-bg-secondary)',
+              }}
+              title="Appearance settings"
+            >
+              <Settings className="h-5 w-5" />
+            </button>
           </div>
         </div>
 
@@ -137,56 +170,58 @@ export function App() {
           {/* Quick stats */}
           <div className="flex items-center gap-6">
             <div className="flex items-center gap-2">
-              <CheckCircle2 className="h-4 w-4 text-emerald-400" />
-              <span className="text-sm text-zinc-300">
-                <span className="font-semibold text-emerald-400">{(stats.successRate * 100).toFixed(0)}%</span> success rate
+              <CheckCircle2 className="h-4 w-4" style={{ color: 'var(--ds-status-success)' }} />
+              <span className="text-sm" style={{ color: 'var(--ds-text-secondary)' }}>
+                <span className="font-semibold" style={{ color: 'var(--ds-status-success)' }}>{(stats.successRate * 100).toFixed(0)}%</span> success rate
               </span>
             </div>
             <div className="flex items-center gap-2">
-              <Loader2 className={cn("h-4 w-4 text-indigo-400", runningCount > 0 && "animate-spin")} />
-              <span className="text-sm text-zinc-300">
-                <span className="font-semibold text-indigo-400">{runningCount}</span> running
+              <Loader2 className={cn("h-4 w-4", runningCount > 0 && "animate-spin")} style={{ color: 'var(--ds-status-info)' }} />
+              <span className="text-sm" style={{ color: 'var(--ds-text-secondary)' }}>
+                <span className="font-semibold" style={{ color: 'var(--ds-status-info)' }}>{runningCount}</span> running
               </span>
             </div>
             <div className="flex items-center gap-2">
-              <XCircle className="h-4 w-4 text-red-400" />
-              <span className="text-sm text-zinc-300">
-                <span className="font-semibold text-red-400">{failedCount}</span> failed
+              <XCircle className="h-4 w-4" style={{ color: 'var(--ds-status-error)' }} />
+              <span className="text-sm" style={{ color: 'var(--ds-text-secondary)' }}>
+                <span className="font-semibold" style={{ color: 'var(--ds-status-error)' }}>{failedCount}</span> failed
               </span>
             </div>
-            <div className="h-4 w-px bg-zinc-800" />
+            <div className="h-4 w-px" style={{ backgroundColor: 'var(--ds-border-primary)' }} />
             <div className="flex items-center gap-2">
-              <DollarSign className="h-4 w-4 text-zinc-500" />
-              <span className="text-sm text-zinc-400">
+              <DollarSign className="h-4 w-4" style={{ color: 'var(--ds-text-muted)' }} />
+              <span className="text-sm" style={{ color: 'var(--ds-text-tertiary)' }}>
                 {formatCost(stats.totalCost)} spent
               </span>
             </div>
             <div className="flex items-center gap-2">
-              <Zap className="h-4 w-4 text-zinc-500" />
-              <span className="text-sm text-zinc-400">
+              <Zap className="h-4 w-4" style={{ color: 'var(--ds-text-muted)' }} />
+              <span className="text-sm" style={{ color: 'var(--ds-text-tertiary)' }}>
                 {formatTokens(stats.totalTokens)} tokens
               </span>
             </div>
             <div className="flex items-center gap-2">
-              <Clock className="h-4 w-4 text-zinc-500" />
-              <span className="text-sm text-zinc-400">
+              <Clock className="h-4 w-4" style={{ color: 'var(--ds-text-muted)' }} />
+              <span className="text-sm" style={{ color: 'var(--ds-text-tertiary)' }}>
                 ~{formatDuration(stats.avgDuration)} avg
               </span>
             </div>
           </div>
 
           {/* Nav tabs */}
-          <nav className="flex items-center gap-1 rounded-xl bg-zinc-900 border border-zinc-800 p-1">
+          <nav
+            className="flex items-center gap-1 rounded-xl border p-1"
+            style={{ backgroundColor: 'var(--ds-nav-bg)', borderColor: 'var(--ds-border-secondary)' }}
+          >
             {NAV_ITEMS.map(item => (
               <button
                 key={item.id}
                 onClick={() => setViewMode(item.id)}
-                className={cn(
-                  'flex items-center gap-2 rounded-lg px-4 py-2 text-sm font-medium transition-all',
-                  viewMode === item.id
-                    ? 'bg-zinc-800 text-zinc-50 shadow-sm'
-                    : 'text-zinc-500 hover:text-zinc-300',
-                )}
+                className="flex items-center gap-2 rounded-lg px-4 py-2 text-sm font-medium transition-all"
+                style={{
+                  backgroundColor: viewMode === item.id ? 'var(--ds-nav-active)' : 'transparent',
+                  color: viewMode === item.id ? 'var(--ds-nav-active-text)' : 'var(--ds-text-muted)',
+                }}
               >
                 {item.icon}
                 {item.label}
@@ -197,7 +232,7 @@ export function App() {
       </header>
 
       {/* Main content */}
-      <main className="flex flex-1 overflow-hidden">
+      <main className="flex flex-1 overflow-hidden" style={{ backgroundColor: 'var(--ds-bg-primary)' }}>
         <AnimatePresence mode="wait">
           {viewMode === 'dashboard' && (
             <motion.div
@@ -208,15 +243,21 @@ export function App() {
               className="flex flex-1 overflow-hidden"
             >
               {/* Execution list */}
-              <div className={cn(
-                'flex flex-col overflow-hidden border-r border-zinc-800 transition-all',
-                selectedExecution ? 'w-1/2' : 'w-full max-w-5xl mx-auto',
-              )}>
-                <div className="px-6 py-3 border-b border-zinc-800 flex items-center justify-between">
-                  <p className="text-sm font-medium text-zinc-400">
+              <div
+                className={cn(
+                  'flex flex-col overflow-hidden border-r transition-all',
+                  selectedExecution ? 'w-1/2' : 'w-full max-w-5xl mx-auto',
+                )}
+                style={{ borderColor: 'var(--ds-border-secondary)' }}
+              >
+                <div
+                  className="px-6 py-3 border-b flex items-center justify-between"
+                  style={{ borderColor: 'var(--ds-border-secondary)' }}
+                >
+                  <p className="text-sm font-medium" style={{ color: 'var(--ds-text-tertiary)' }}>
                     {executions.length} workflow executions
                   </p>
-                  <p className="text-xs text-zinc-600">Click any execution to inspect</p>
+                  <p className="text-xs" style={{ color: 'var(--ds-text-muted)' }}>Click any execution to inspect</p>
                 </div>
                 <ExecutionList
                   executions={executions}
