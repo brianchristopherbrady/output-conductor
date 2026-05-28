@@ -8,6 +8,7 @@ import { TrendingUp, DollarSign, Zap, Activity } from 'lucide-react';
 import { WorkflowExecution, CostBreakdown } from '@/types';
 import { MetricCard } from '@/components/shared/StatusBadge';
 import { formatCost, formatTokens } from '@/utils';
+import { CostHeatmap } from './CostHeatmap';
 
 interface AnalyticsPanelProps {
   executions: WorkflowExecution[];
@@ -108,6 +109,16 @@ export function AnalyticsPanel({ executions, costData, stats }: AnalyticsPanelPr
             <Area type="monotone" dataKey="outputCost" stroke="#10b981" fill="url(#colorOutput)" name="Output Cost" />
           </AreaChart>
         </ResponsiveContainer>
+      </motion.div>
+
+      {/* Cost Heatmap */}
+      <motion.div
+        initial={{ opacity: 0, y: 12 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ delay: 0.15 }}
+        className="rounded-xl border border-zinc-800 bg-zinc-900/50 p-4"
+      >
+        <CostHeatmap costData={costData} />
       </motion.div>
 
       {/* Bottom charts */}

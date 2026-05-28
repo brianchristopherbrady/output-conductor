@@ -1,10 +1,13 @@
-import { useState } from 'react';
+import { useState, useCallback } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import {
   LayoutDashboard, GitBranch, Activity, BarChart3, Search,
   Filter, ChevronDown, Workflow, CheckCircle2, XCircle, Loader2, DollarSign, Zap, Clock, Settings, Route,
+  GitCompare, TrendingUp, Radio,
 } from 'lucide-react';
 import { useWorkflowData } from '@/hooks/useWorkflowData';
+import { useLiveMode } from '@/hooks/useLiveMode';
+import { useKeyboardShortcuts } from '@/hooks/useKeyboardShortcuts';
 import { useDesignSystem } from '@/design-system';
 import { HeroSection } from '@/components/dashboard/HeroSection';
 import { ExecutionList } from '@/components/dashboard/ExecutionList';
@@ -14,6 +17,11 @@ import { TracesView } from '@/components/traces/TracesView';
 import { AnalyticsPanel } from '@/components/analytics/AnalyticsPanel';
 import { SettingsPanel } from '@/components/settings/SettingsPanel';
 import { FlowGraph } from '@/components/flow/FlowGraph';
+import { PromptDiffViewer } from '@/components/diff/PromptDiffViewer';
+import { EvalTrends } from '@/components/analytics/EvalTrends';
+import { CommandPalette, CommandAction } from '@/components/shared/CommandPalette';
+import { ToastNotification } from '@/components/shared/ToastNotification';
+import { ShortcutsHelp } from '@/components/shared/ShortcutsHelp';
 import { ViewMode } from '@/types';
 import { cn, formatCost, formatTokens, formatDuration } from '@/utils';
 
@@ -22,6 +30,8 @@ const NAV_ITEMS: { id: ViewMode; label: string; icon: React.ReactNode }[] = [
   { id: 'flow', label: 'Flow', icon: <Route className="h-3.5 w-3.5" /> },
   { id: 'timeline', label: 'Timeline', icon: <GitBranch className="h-3.5 w-3.5" /> },
   { id: 'traces', label: 'Traces', icon: <Activity className="h-3.5 w-3.5" /> },
+  { id: 'diff', label: 'Diff', icon: <GitCompare className="h-3.5 w-3.5" /> },
+  { id: 'evals', label: 'Evals', icon: <TrendingUp className="h-3.5 w-3.5" /> },
   { id: 'analytics', label: 'Analytics', icon: <BarChart3 className="h-3.5 w-3.5" /> },
 ];
 
@@ -45,12 +55,51 @@ export function App() {
   } = useWorkflowData();
 
   const { theme, density } = useDesignSystem();
+  const { isLive, toggleLive, events: liveEvents } = useLiveMode();
   const [filterOpen, setFilterOpen] = useState(false);
   const [settingsOpen, setSettingsOpen] = useState(false);
   const [showHero, setShowHero] = useState(true);
+  const [commandPaletteOpen, setCommandPaletteOpen] = useState(false);
+  const [shortcutsHelpOpen, setShortcutsHelpOpen] = useState(false);
 
   const runningCount = allExecutions.filter(e => e.status === 'running').length;
   const failedCount = allExecutions.filter(e => e.status === 'failed').length;
+
+  // Command palette action handler
+  const handleCommandAction = useCallback((action: CommandAction) => {
+    setCommandPaletteOpen(false);
+    if (action.type === 'navigate') {
+      setViewMode(action.value as ViewMode);
+    } else if (action.type === 'filter') {
+      setWorkflowFilter(action.value);
+      setViewMode('dashboard');
+    } else if (action.type === 'action') {
+      if (action.value === 'toggle-theme') {
+        // handled by design system
+      } else if (action.value === 'toggle-live') {
+        toggleLive();
+      } else if (action.value === 'settings') {
+        setSettingsOpen(true);
+      }
+    }
+  }, [setViewMode, setWorkflowFilter, toggleLive]);
+
+  // Keyboard shortcuts
+  useKeyboardShortcuts({
+    onOpenCommandPalette: () => setCommandPaletteOpen(true),
+    onShowHelp: () => setShortcutsHelpOpen(true),
+    onBack: () => {
+      if (settingsOpen) setSettingsOpen(false);
+      else if (selectedExecution) selectExecution(null);
+    },
+    onToggleLive: toggleLive,
+    onOpenSettings: () => setSettingsOpen(true),
+    onGoToDashboard: () => setViewMode('dashboard'),
+    onGoToFlow: () => setViewMode('flow'),
+    onGoToTimeline: () => setViewMode('timeline'),
+    onGoToTraces: () => setViewMode('traces'),
+    onGoToAnalytics: () => setViewMode('analytics'),
+  });
 
   if (showHero) {
     return (
@@ -69,6 +118,15 @@ export function App() {
       <AnimatePresence>
         {settingsOpen && <SettingsPanel onClose={() => setSettingsOpen(false)} />}
       </AnimatePresence>
+
+      {/* Command palette */}
+      <CommandPalette open={commandPaletteOpen} onClose={() => setCommandPaletteOpen(false)} onAction={handleCommandAction} />
+
+      {/* Shortcuts help */}
+      <ShortcutsHelp open={shortcutsHelpOpen} onClose={() => setShortcutsHelpOpen(false)} />
+
+      {/* Toast notifications (live mode) */}
+      <ToastNotification events={liveEvents} />
 
       {/* Top bar */}
       <header
@@ -169,6 +227,23 @@ export function App() {
               </AnimatePresence>
             </div>
 
+            {/* Live mode toggle */}
+            <button
+              onClick={toggleLive}
+              className={cn(
+                'rounded-lg border p-1.5 transition-all',
+                isLive ? 'border-green-500/40 bg-green-500/10' : 'hover:opacity-80',
+              )}
+              style={{
+                borderColor: isLive ? undefined : 'var(--ds-border-primary)',
+                color: isLive ? 'rgb(34,197,94)' : 'var(--ds-text-tertiary)',
+                backgroundColor: isLive ? undefined : 'var(--ds-bg-secondary)',
+              }}
+              title={isLive ? 'Live mode ON (L)' : 'Live mode OFF (L)'}
+            >
+              <Radio className={cn('h-4 w-4', isLive && 'animate-pulse')} />
+            </button>
+
             {/* Settings button */}
             <button
               onClick={() => setSettingsOpen(true)}
@@ -178,7 +253,7 @@ export function App() {
                 color: 'var(--ds-text-tertiary)',
                 backgroundColor: 'var(--ds-bg-secondary)',
               }}
-              title="Appearance settings"
+              title="Appearance settings (S)"
             >
               <Settings className="h-4 w-4" />
             </button>
@@ -354,6 +429,30 @@ export function App() {
                 selectedExecution={selectedExecution}
                 onSelectExecution={selectExecution}
               />
+            </motion.div>
+          )}
+
+          {viewMode === 'diff' && (
+            <motion.div
+              key="diff"
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              exit={{ opacity: 0 }}
+              className="flex-1 overflow-hidden"
+            >
+              <PromptDiffViewer executions={allExecutions} />
+            </motion.div>
+          )}
+
+          {viewMode === 'evals' && (
+            <motion.div
+              key="evals"
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              exit={{ opacity: 0 }}
+              className="flex-1 overflow-hidden"
+            >
+              <EvalTrends executions={allExecutions} />
             </motion.div>
           )}
         </AnimatePresence>
