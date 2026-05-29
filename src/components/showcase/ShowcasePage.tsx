@@ -2,117 +2,18 @@ import { motion } from 'framer-motion';
 import {
   Workflow, Route, GitBranch, Activity, BarChart3, GitCompare, TrendingUp,
   Radio, Command, Keyboard, Palette, Layers, Gauge, Eye, Sparkles, Code2,
-  Monitor, Zap,
+  Monitor, Zap, ExternalLink, Target, Users, Lightbulb, Box,
 } from 'lucide-react';
-
-const FEATURES = [
-  {
-    icon: <Workflow className="h-5 w-5" />,
-    title: 'Virtualized Execution List',
-    description: 'Browse 500+ workflow executions with buttery-smooth scroll. TanStack Virtual renders only visible rows for constant performance regardless of dataset size.',
-    tags: ['@tanstack/react-virtual', 'Performance', '60fps'],
-  },
-  {
-    icon: <Route className="h-5 w-5" />,
-    title: 'Pipeline Flow Graph',
-    description: 'SVG-based directed acyclic graph showing workflow steps as connected nodes. Animated particles flow along edges in real-time. Select a run to hydrate the template with execution state.',
-    tags: ['SVG', 'Animation', 'requestAnimationFrame'],
-  },
-  {
-    icon: <GitBranch className="h-5 w-5" />,
-    title: 'Timeline Swimlanes',
-    description: 'Temporal view of concurrent step execution with proportional-width bars. Instant visual feedback on parallelism bottlenecks and step ordering.',
-    tags: ['Data Visualization', 'Temporal'],
-  },
-  {
-    icon: <GitCompare className="h-5 w-5" />,
-    title: 'Prompt Diff Viewer',
-    description: 'LCS-based line diff comparing prompts and responses between workflow runs. Smart filtering ensures only compatible runs appear. Mini pipeline nav shows context.',
-    tags: ['LCS Algorithm', 'Side-by-side', 'Comparison'],
-  },
-  {
-    icon: <TrendingUp className="h-5 w-5" />,
-    title: 'Evaluation Trends',
-    description: 'Per-evaluator pass rate over time with automated regression detection. Confidence distribution histograms. Alerts surface when quality drops >10% week-over-week.',
-    tags: ['recharts', 'Regression Detection', 'Analytics'],
-  },
-  {
-    icon: <BarChart3 className="h-5 w-5" />,
-    title: 'Cost Heatmap',
-    description: 'GitHub-contributions-style calendar showing daily API spend. Color intensity maps to cost magnitude. Hover for details, click to drill into any day.',
-    tags: ['SVG Heatmap', 'Tooltips', 'Interactive'],
-  },
-  {
-    icon: <Radio className="h-5 w-5" />,
-    title: 'Live Mode',
-    description: 'Simulated real-time workflow events with glass-morphism toast notifications. Events auto-dismiss and stack gracefully. Toggle with the L key or header button.',
-    tags: ['Real-time', 'Toast System', 'framer-motion'],
-  },
-  {
-    icon: <Command className="h-5 w-5" />,
-    title: 'Command Palette',
-    description: 'Ctrl+K opens a fuzzy-search command palette across views, workflows, and actions. Keyboard-navigable with arrow keys. Grouped results with shortcut hints.',
-    tags: ['Fuzzy Search', 'Keyboard-first', 'Accessibility'],
-  },
-  {
-    icon: <Keyboard className="h-5 w-5" />,
-    title: 'Keyboard Shortcuts',
-    description: 'Full keyboard navigation: j/k to traverse, 1-7 to switch views, L for live mode, S for settings, ? for help overlay. Input-aware (disabled when typing).',
-    tags: ['Power Users', 'Accessibility', 'Global Listeners'],
-  },
-  {
-    icon: <Palette className="h-5 w-5" />,
-    title: 'Design System & Theming',
-    description: 'Comprehensive token-based design system with 60+ semantic color tokens, 3 density modes (compact/comfortable/spacious), and light/dark themes. CSS custom properties for runtime switching.',
-    tags: ['Design Tokens', 'CSS Variables', 'Theme Engine'],
-  },
-];
-
-const TECH_STACK = [
-  { name: 'React 19', role: 'UI Framework' },
-  { name: 'TypeScript', role: 'Type Safety' },
-  { name: 'Vite', role: 'Build Tool' },
-  { name: 'Tailwind CSS 4', role: 'Utility Styles' },
-  { name: 'Framer Motion', role: 'Animations' },
-  { name: 'TanStack Virtual', role: 'Virtualization' },
-  { name: 'Recharts', role: 'Data Charts' },
-  { name: 'Lucide React', role: 'Icons' },
-  { name: 'Vitest', role: 'Testing' },
-  { name: 'date-fns', role: 'Date Utils' },
-];
-
-const DESIGN_DECISIONS = [
-  {
-    title: 'Template → State Pattern',
-    description: 'The Flow view shows a neutral "template" of the pipeline first, then overlays execution state when a run is selected. This teaches users the workflow structure before layering on complexity.',
-  },
-  {
-    title: 'Progressive Disclosure',
-    description: 'Each view starts with a scannable overview (lists, graphs) and lets users drill into detail (sidebars, modals, inspectors) on demand. No information overload on first render.',
-  },
-  {
-    title: 'Density as a First-Class Setting',
-    description: 'Users monitoring dashboards all day need compact mode. Those presenting to stakeholders want spacious. Density affects every component through CSS custom properties — zero re-renders.',
-  },
-  {
-    title: 'Keyboard-First, Mouse-Friendly',
-    description: 'Every primary action is keyboard-accessible (navigation, search, mode switching). But the UI is fully mouse-driven too — shortcuts are progressive enhancement, not requirements.',
-  },
-  {
-    title: 'Neutral Diff Semantics',
-    description: 'Prompt diffs use amber/blue instead of red/green. Red/green implies "bad/good" or "error/success" — but diffs are neutral comparisons. Color meaning matters.',
-  },
-];
 
 export function ShowcasePage() {
   return (
     <div className="overflow-auto h-full">
-      <div className="max-w-5xl mx-auto px-6 py-10 space-y-12">
+      <div className="max-w-4xl mx-auto px-6 py-10 space-y-14">
         {/* Hero */}
         <motion.header
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
-          className="space-y-4"
+          className="space-y-5"
         >
           <div className="flex items-center gap-3">
             <div className="rounded-xl bg-gradient-to-br from-conductor-500 to-conductor-700 p-2.5 shadow-lg shadow-conductor-500/20">
@@ -123,102 +24,151 @@ export function ShowcasePage() {
                 Conductor
               </h1>
               <p className="text-sm" style={{ color: 'var(--ds-text-muted)' }}>
-                A Visual Workflow Observatory for Output.ai
+                A product built on Output.ai
               </p>
             </div>
           </div>
-          <p className="text-sm leading-relaxed max-w-2xl" style={{ color: 'var(--ds-text-secondary)' }}>
-            Conductor is a design-engineering prototype demonstrating how complex AI workflow data
-            can be presented through ergonomic, information-dense interfaces. Built as a portfolio piece
-            for the Design Engineer role at Output.ai, it showcases interaction patterns, data visualization,
-            and systems thinking applied to developer tooling.
+          <p className="text-base leading-relaxed max-w-3xl" style={{ color: 'var(--ds-text-secondary)' }}>
+            Conductor is a visual workflow observatory — a real-time monitoring, debugging, and optimization interface
+            for teams running AI pipelines on <strong style={{ color: 'var(--ds-text-primary)' }}>Output.ai</strong>.
+            It turns raw execution data into intuitive, actionable views so engineering teams can understand what their
+            workflows are doing, why they fail, and how to make them better.
           </p>
         </motion.header>
 
-        {/* What This Demonstrates */}
+        {/* The Idea */}
+        <motion.section
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ delay: 0.05 }}
+          className="space-y-4"
+        >
+          <div className="flex items-center gap-2">
+            <Lightbulb className="h-5 w-5" style={{ color: 'var(--color-conductor-500)' }} />
+            <h2 className="text-lg font-semibold" style={{ color: 'var(--ds-text-primary)' }}>The Idea</h2>
+          </div>
+          <div className="rounded-xl border p-5 space-y-4" style={{ backgroundColor: 'var(--ds-bg-secondary)', borderColor: 'var(--ds-border-primary)' }}>
+            <p className="text-sm leading-relaxed" style={{ color: 'var(--ds-text-secondary)' }}>
+              Output.ai gives you everything to <em>build</em> AI workflows — type-safe orchestration, prompt management,
+              evaluators, tracing, cost tracking. But once workflows are running in production, teams need a way to <em>see</em> what's happening.
+            </p>
+            <p className="text-sm leading-relaxed" style={{ color: 'var(--ds-text-secondary)' }}>
+              <strong style={{ color: 'var(--ds-text-primary)' }}>Conductor is the visual layer that sits on top of Output.ai's runtime.</strong> It
+              connects to the execution history API, trace log endpoints, and cost events to render a complete picture of
+              every workflow run — from the high-level execution list down to individual LLM prompts and token costs.
+            </p>
+            <p className="text-sm leading-relaxed" style={{ color: 'var(--ds-text-secondary)' }}>
+              Think of it as the "Vercel Dashboard" for Output.ai pipelines — the observability companion that makes
+              the framework complete.
+            </p>
+          </div>
+        </motion.section>
+
+        {/* Who It's For */}
         <motion.section
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ delay: 0.1 }}
           className="space-y-4"
         >
-          <h2 className="text-lg font-semibold" style={{ color: 'var(--ds-text-primary)' }}>
-            What This Demonstrates
-          </h2>
+          <div className="flex items-center gap-2">
+            <Users className="h-5 w-5" style={{ color: 'var(--color-conductor-500)' }} />
+            <h2 className="text-lg font-semibold" style={{ color: 'var(--ds-text-primary)' }}>Who It's For</h2>
+          </div>
           <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
             {[
-              { icon: <Eye className="h-4 w-4" />, label: 'Complex Data → Clear UI', desc: '500 executions, multi-level drill-down, zero overwhelm' },
-              { icon: <Sparkles className="h-4 w-4" />, label: 'Polished Interactions', desc: 'Animated transitions, particles, keyboard nav, command palette' },
-              { icon: <Code2 className="h-4 w-4" />, label: 'Systems Thinking', desc: 'Design tokens, theme engine, density configs, clean architecture' },
+              { role: 'AI Engineers', desc: 'Debug failing steps, compare prompt versions across runs, trace why an evaluator scored low.' },
+              { role: 'Platform Teams', desc: 'Monitor cost trends, track provider usage, identify runaway workflows before budgets blow up.' },
+              { role: 'Product Managers', desc: 'Understand pipeline health, quality trends over time, and where latency bottlenecks live.' },
             ].map(item => (
-              <div key={item.label} className="rounded-xl border p-4 space-y-2"
+              <div key={item.role} className="rounded-xl border p-4 space-y-2"
                 style={{ backgroundColor: 'var(--ds-bg-secondary)', borderColor: 'var(--ds-border-primary)' }}>
-                <div className="flex items-center gap-2" style={{ color: 'var(--ds-text-primary)' }}>
-                  {item.icon}
-                  <span className="text-sm font-medium">{item.label}</span>
-                </div>
-                <p className="text-xs" style={{ color: 'var(--ds-text-muted)' }}>{item.desc}</p>
+                <span className="text-sm font-semibold" style={{ color: 'var(--ds-text-primary)' }}>{item.role}</span>
+                <p className="text-xs leading-relaxed" style={{ color: 'var(--ds-text-muted)' }}>{item.desc}</p>
               </div>
             ))}
           </div>
         </motion.section>
 
-        {/* Features */}
+        {/* How It Connects to Output.ai */}
+        <motion.section
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ delay: 0.15 }}
+          className="space-y-4"
+        >
+          <div className="flex items-center gap-2">
+            <Box className="h-5 w-5" style={{ color: 'var(--color-conductor-500)' }} />
+            <h2 className="text-lg font-semibold" style={{ color: 'var(--ds-text-primary)' }}>How It Connects to Output.ai</h2>
+          </div>
+          <div className="rounded-xl border overflow-hidden" style={{ borderColor: 'var(--ds-border-primary)' }}>
+            <table className="w-full text-sm">
+              <thead>
+                <tr style={{ backgroundColor: 'var(--ds-bg-tertiary)' }}>
+                  <th className="px-4 py-3 text-left text-xs font-medium uppercase tracking-wider" style={{ color: 'var(--ds-text-muted)' }}>Output.ai Feature</th>
+                  <th className="px-4 py-3 text-left text-xs font-medium uppercase tracking-wider" style={{ color: 'var(--ds-text-muted)' }}>API Endpoint</th>
+                  <th className="px-4 py-3 text-left text-xs font-medium uppercase tracking-wider" style={{ color: 'var(--ds-text-muted)' }}>Conductor View</th>
+                </tr>
+              </thead>
+              <tbody style={{ backgroundColor: 'var(--ds-bg-secondary)' }}>
+                {[
+                  ['Workflow Orchestration', '/workflow/{id}/runs', 'Execution list + detail panel'],
+                  ['Step Execution', '/workflow/{id}/runs/{rid}/status', 'States (flow graph) + Timeline'],
+                  ['Trace Logs', '/workflow/{id}/runs/{rid}/trace-log', 'Traces view + Prompt Diff'],
+                  ['Evaluators', 'Eval verdicts in trace data', 'Insights: regression table + trends'],
+                  ['Cost Events', 'cost:llm:request hooks', 'Analytics: heatmap + cost chart'],
+                  ['Temporal History', '/workflow/{id}/runs/{rid}/history', 'Timeline swimlanes'],
+                ].map(([feature, endpoint, view], i) => (
+                  <tr key={i} className="border-t" style={{ borderColor: 'var(--ds-border-secondary)' }}>
+                    <td className="px-4 py-2.5 font-medium" style={{ color: 'var(--ds-text-primary)' }}>{feature}</td>
+                    <td className="px-4 py-2.5 font-mono text-xs" style={{ color: 'var(--ds-text-muted)' }}>{endpoint}</td>
+                    <td className="px-4 py-2.5" style={{ color: 'var(--ds-text-secondary)' }}>{view}</td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+          <p className="text-xs leading-relaxed" style={{ color: 'var(--ds-text-muted)' }}>
+            Conductor consumes Output.ai's REST API and trace data. In production, it would subscribe to real-time
+            events via the Temporal event stream for live workflow monitoring. This prototype uses mock data shaped
+            to match Output.ai's actual data model — workflows with typed inputs/outputs, steps, LLM traces, evaluator verdicts, and cost events.
+          </p>
+        </motion.section>
+
+        {/* Experience Design */}
         <motion.section
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ delay: 0.2 }}
           className="space-y-4"
         >
-          <h2 className="text-lg font-semibold" style={{ color: 'var(--ds-text-primary)' }}>
-            Features ({FEATURES.length})
-          </h2>
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
-            {FEATURES.map((feature, i) => (
-              <motion.div
-                key={feature.title}
-                initial={{ opacity: 0, y: 12 }}
-                animate={{ opacity: 1, y: 0 }}
-                transition={{ delay: 0.05 * i }}
-                className="rounded-xl border p-4 space-y-2"
-                style={{ backgroundColor: 'var(--ds-bg-secondary)', borderColor: 'var(--ds-border-primary)' }}
-              >
-                <div className="flex items-center gap-2.5">
-                  <div className="rounded-lg p-1.5" style={{ backgroundColor: 'var(--ds-bg-tertiary)', color: 'var(--ds-text-secondary)' }}>
-                    {feature.icon}
-                  </div>
-                  <h3 className="text-sm font-semibold" style={{ color: 'var(--ds-text-primary)' }}>
-                    {feature.title}
-                  </h3>
-                </div>
-                <p className="text-xs leading-relaxed" style={{ color: 'var(--ds-text-muted)' }}>
-                  {feature.description}
-                </p>
-                <div className="flex flex-wrap gap-1.5 pt-1">
-                  {feature.tags.map(tag => (
-                    <span key={tag} className="rounded-full px-2 py-0.5 text-[10px] font-medium"
-                      style={{ backgroundColor: 'var(--ds-bg-tertiary)', color: 'var(--ds-text-tertiary)' }}>
-                      {tag}
-                    </span>
-                  ))}
-                </div>
-              </motion.div>
-            ))}
+          <div className="flex items-center gap-2">
+            <Target className="h-5 w-5" style={{ color: 'var(--color-conductor-500)' }} />
+            <h2 className="text-lg font-semibold" style={{ color: 'var(--ds-text-primary)' }}>Designing the Experience</h2>
           </div>
-        </motion.section>
-
-        {/* Design Decisions */}
-        <motion.section
-          initial={{ opacity: 0, y: 20 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ delay: 0.3 }}
-          className="space-y-4"
-        >
-          <h2 className="text-lg font-semibold" style={{ color: 'var(--ds-text-primary)' }}>
-            Design Decisions
-          </h2>
           <div className="space-y-3">
-            {DESIGN_DECISIONS.map((decision, i) => (
+            {[
+              {
+                title: 'Progressive Disclosure',
+                description: 'Start with the execution list — a scannable overview of every workflow run. Click to drill into a run\'s steps, timing, traces, and evals. Each layer reveals more detail without overwhelming the first view.',
+              },
+              {
+                title: 'Template → State Pattern',
+                description: 'The flow graph shows the workflow\'s DAG structure as a neutral template. Select a specific run, and the nodes fill with execution state (pass/fail, duration, cost). This teaches the pipeline topology before adding complexity.',
+              },
+              {
+                title: 'Comparison as a First-Class Concept',
+                description: 'Output.ai\'s prompt files live in version control. Conductor\'s diff viewer lets you compare prompts and outputs between any two runs — making it trivial to see how prompt changes affect quality.',
+              },
+              {
+                title: 'Quality Signals, Not Just Logs',
+                description: 'Rather than raw trace dumps, Conductor surfaces evaluator regression alerts, pass rate trends, and confidence distributions. Teams see quality direction at a glance without reading individual traces.',
+              },
+              {
+                title: 'Cost Awareness',
+                description: 'The cost heatmap and analytics panel make spend visible. Teams using Output.ai in production need to know: which workflows are expensive? Which days spike? Which providers eat budget?',
+              },
+            ].map((decision) => (
               <div key={decision.title} className="rounded-xl border p-4"
                 style={{ backgroundColor: 'var(--ds-bg-secondary)', borderColor: 'var(--ds-border-primary)' }}>
                 <h3 className="text-sm font-semibold mb-1" style={{ color: 'var(--ds-text-primary)' }}>
@@ -232,66 +182,121 @@ export function ShowcasePage() {
           </div>
         </motion.section>
 
-        {/* Tech Stack */}
+        {/* Features Built */}
         <motion.section
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
-          transition={{ delay: 0.4 }}
+          transition={{ delay: 0.25 }}
           className="space-y-4"
         >
-          <h2 className="text-lg font-semibold" style={{ color: 'var(--ds-text-primary)' }}>
-            Tech Stack
-          </h2>
-          <div className="flex flex-wrap gap-2">
-            {TECH_STACK.map(tech => (
-              <div key={tech.name} className="flex items-center gap-2 rounded-lg border px-3 py-2"
+          <div className="flex items-center gap-2">
+            <Sparkles className="h-5 w-5" style={{ color: 'var(--color-conductor-500)' }} />
+            <h2 className="text-lg font-semibold" style={{ color: 'var(--ds-text-primary)' }}>What's in the Prototype</h2>
+          </div>
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+            {[
+              { icon: <Workflow className="h-4 w-4" />, title: 'Virtualized Execution List', desc: 'Browse 500+ runs with constant-performance scroll (TanStack Virtual).' },
+              { icon: <Route className="h-4 w-4" />, title: 'Pipeline Flow Graph', desc: 'SVG DAG with animated particles, click-to-inspect nodes, execution state overlay.' },
+              { icon: <GitBranch className="h-4 w-4" />, title: 'Timeline Swimlanes', desc: 'Temporal view showing parallel step execution and latency bottlenecks.' },
+              { icon: <GitCompare className="h-4 w-4" />, title: 'Prompt Diff Viewer', desc: 'LCS-based side-by-side comparison of prompts and responses between runs.' },
+              { icon: <TrendingUp className="h-4 w-4" />, title: 'Evaluation Insights', desc: 'Regression detection, pass rate trends, confidence histograms, multi-select filtering.' },
+              { icon: <BarChart3 className="h-4 w-4" />, title: 'Cost Heatmap + Analytics', desc: 'GitHub-style calendar, daily spend, provider breakdown, token tracking.' },
+              { icon: <Radio className="h-4 w-4" />, title: 'Live Mode', desc: 'Simulated real-time event stream with toast notifications.' },
+              { icon: <Command className="h-4 w-4" />, title: 'Command Palette + Shortcuts', desc: 'Ctrl+K search, 1-7 view switching, j/k navigation, ? for help.' },
+              { icon: <Palette className="h-4 w-4" />, title: 'Design System', desc: '60+ semantic tokens, light/dark themes, 3 density modes, zero-rerender switching.' },
+              { icon: <Activity className="h-4 w-4" />, title: 'Demo Scenario', desc: '"Meridian Health" — a healthcare company using Output.ai for clinical AI workflows.' },
+            ].map((feature) => (
+              <div key={feature.title} className="flex items-start gap-3 rounded-xl border p-3"
                 style={{ backgroundColor: 'var(--ds-bg-secondary)', borderColor: 'var(--ds-border-primary)' }}>
-                <span className="text-xs font-semibold" style={{ color: 'var(--ds-text-primary)' }}>{tech.name}</span>
-                <span className="text-[10px]" style={{ color: 'var(--ds-text-muted)' }}>{tech.role}</span>
+                <div className="rounded-lg p-1.5 shrink-0" style={{ backgroundColor: 'var(--ds-bg-tertiary)', color: 'var(--ds-text-secondary)' }}>
+                  {feature.icon}
+                </div>
+                <div className="min-w-0">
+                  <h3 className="text-xs font-semibold" style={{ color: 'var(--ds-text-primary)' }}>{feature.title}</h3>
+                  <p className="text-[11px] leading-relaxed mt-0.5" style={{ color: 'var(--ds-text-muted)' }}>{feature.desc}</p>
+                </div>
               </div>
             ))}
           </div>
         </motion.section>
 
-        {/* Architecture Note */}
+        {/* Tech Stack */}
         <motion.section
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
-          transition={{ delay: 0.5 }}
+          transition={{ delay: 0.3 }}
+          className="space-y-4"
+        >
+          <div className="flex items-center gap-2">
+            <Code2 className="h-5 w-5" style={{ color: 'var(--color-conductor-500)' }} />
+            <h2 className="text-lg font-semibold" style={{ color: 'var(--ds-text-primary)' }}>Built With</h2>
+          </div>
+          <div className="flex flex-wrap gap-2">
+            {[
+              'React 19', 'TypeScript', 'Vite', 'Tailwind CSS 4', 'Framer Motion',
+              'TanStack Virtual', 'Recharts', 'Vitest', 'date-fns', 'Lucide Icons',
+            ].map(tech => (
+              <span key={tech} className="rounded-lg border px-3 py-1.5 text-xs font-medium"
+                style={{ backgroundColor: 'var(--ds-bg-secondary)', borderColor: 'var(--ds-border-primary)', color: 'var(--ds-text-primary)' }}>
+                {tech}
+              </span>
+            ))}
+          </div>
+        </motion.section>
+
+        {/* Why This Product */}
+        <motion.section
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ delay: 0.35 }}
           className="rounded-xl border p-5 space-y-3"
           style={{ backgroundColor: 'var(--ds-bg-secondary)', borderColor: 'var(--ds-border-primary)' }}
         >
           <div className="flex items-center gap-2">
             <Monitor className="h-4 w-4" style={{ color: 'var(--ds-text-muted)' }} />
             <h2 className="text-sm font-semibold" style={{ color: 'var(--ds-text-primary)' }}>
-              How This Maps to Output.ai
+              Why This Product Fits Output.ai
             </h2>
           </div>
-          <div className="space-y-2 text-xs leading-relaxed" style={{ color: 'var(--ds-text-muted)' }}>
+          <div className="space-y-3 text-xs leading-relaxed" style={{ color: 'var(--ds-text-muted)' }}>
             <p>
-              Output.ai is a TypeScript framework for building reliable AI workflows — with Temporal-backed orchestration,
-              multi-provider LLM support, tracing, evaluations, and cost tracking. Conductor visualizes every layer:
+              Output.ai already collects the data: execution history, trace logs, evaluator verdicts, cost events.
+              The framework's APIs expose all of this. What's missing is a <strong style={{ color: 'var(--ds-text-secondary)' }}>visual interface</strong> that
+              makes it intuitive to navigate.
             </p>
-            <ul className="space-y-1 pl-4 list-disc">
-              <li><strong style={{ color: 'var(--ds-text-secondary)' }}>Workflow executions</strong> → the main list + detail panel</li>
-              <li><strong style={{ color: 'var(--ds-text-secondary)' }}>Step orchestration</strong> → the Flow Graph DAG + Timeline view</li>
-              <li><strong style={{ color: 'var(--ds-text-secondary)' }}>LLM traces</strong> → Traces view + Prompt Diff comparison</li>
-              <li><strong style={{ color: 'var(--ds-text-secondary)' }}>Evaluations</strong> → Eval Trends with regression detection</li>
-              <li><strong style={{ color: 'var(--ds-text-secondary)' }}>Cost & tokens</strong> → Analytics panel + Cost Heatmap</li>
-              <li><strong style={{ color: 'var(--ds-text-secondary)' }}>Real-time status</strong> → Live Mode with event stream + toasts</li>
-            </ul>
             <p>
-              This isn't just a dashboard — it's a proposal for how Output.ai's developer experience could extend
-              beyond the SDK into a visual control plane for monitoring, debugging, and optimizing AI pipelines.
+              Conductor fills that gap. It's not a competitor to Output.ai — it's a <strong style={{ color: 'var(--ds-text-secondary)' }}>product that only exists because Output.ai exists</strong>.
+              Every view maps directly to a framework feature. The execution list consumes the runs API. The flow graph renders
+              the workflow/step structure. The diff viewer compares trace log outputs. The insights page aggregates evaluator verdicts.
+              The cost panel uses cost event hooks.
+            </p>
+            <p>
+              This is the kind of product I'd want to build at Output.ai — making powerful infrastructure <em>visible</em> and <em>navigable</em> for
+              the engineers who use it every day.
             </p>
           </div>
         </motion.section>
 
         {/* Footer */}
-        <div className="pt-4 pb-8 text-center">
-          <p className="text-xs" style={{ color: 'var(--ds-text-muted)' }}>
-            Built by Brian Brady as a design engineering portfolio piece for Output.ai
+        <div className="pt-4 pb-8 text-center space-y-2">
+          <p className="text-sm font-medium" style={{ color: 'var(--ds-text-primary)' }}>
+            Brian Brady
           </p>
+          <p className="text-xs" style={{ color: 'var(--ds-text-muted)' }}>
+            Design Engineer — built as a portfolio piece for Output.ai
+          </p>
+          <div className="flex items-center justify-center gap-4 pt-2">
+            <a
+              href="https://github.com/brianchristopherbrady/output-conductor"
+              target="_blank"
+              rel="noopener noreferrer"
+              className="inline-flex items-center gap-1.5 text-xs font-medium transition-colors hover:opacity-80"
+              style={{ color: 'var(--ds-text-link)' }}
+            >
+              <ExternalLink className="h-3 w-3" />
+              Source Code
+            </a>
+          </div>
         </div>
       </div>
     </div>
