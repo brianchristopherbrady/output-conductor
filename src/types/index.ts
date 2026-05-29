@@ -78,4 +78,4 @@ export interface WorkflowStats {
   avgTokensPerExecution: number;
 }
 
-export type ViewMode = 'dashboard' | 'timeline' | 'traces' | 'analytics' | 'flow' | 'diff' | 'evals' | 'showcase';
+export type ViewMode = 'dashboard' | 'timeline' | 'traces' | 'insights' | 'flow' | 'diff' | 'showcase';

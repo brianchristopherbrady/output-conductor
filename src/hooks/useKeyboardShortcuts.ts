@@ -13,7 +13,9 @@ export interface ShortcutHandlers {
   onGoToFlow?: () => void;
   onGoToTimeline?: () => void;
   onGoToTraces?: () => void;
-  onGoToAnalytics?: () => void;
+  onGoToDiff?: () => void;
+  onGoToInsights?: () => void;
+  onGoToShowcase?: () => void;
 }
 
 function isTextInputFocused() {
@@ -103,7 +105,15 @@ export function useKeyboardShortcuts(handlers: ShortcutHandlers) {
           break;
         case '5':
           event.preventDefault();
-          handlersRef.current.onGoToAnalytics?.();
+          handlersRef.current.onGoToDiff?.();
+          break;
+        case '6':
+          event.preventDefault();
+          handlersRef.current.onGoToInsights?.();
+          break;
+        case '7':
+          event.preventDefault();
+          handlersRef.current.onGoToShowcase?.();
           break;
         default:
           break;

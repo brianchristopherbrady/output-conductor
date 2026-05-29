@@ -3,7 +3,7 @@ import { motion, AnimatePresence } from 'framer-motion';
 import {
   LayoutDashboard, GitBranch, Activity, BarChart3, Search,
   Filter, ChevronDown, Workflow, CheckCircle2, XCircle, Loader2, DollarSign, Zap, Clock, Settings, Route,
-  GitCompare, TrendingUp, Radio, BookOpen,
+  GitCompare, Radio, BookOpen,
 } from 'lucide-react';
 import { useWorkflowData } from '@/hooks/useWorkflowData';
 import { useLiveMode } from '@/hooks/useLiveMode';
@@ -28,12 +28,11 @@ import { cn, formatCost, formatTokens, formatDuration } from '@/utils';
 
 const NAV_ITEMS: { id: ViewMode; label: string; icon: React.ReactNode }[] = [
   { id: 'dashboard', label: 'Executions', icon: <LayoutDashboard className="h-3.5 w-3.5" /> },
-  { id: 'flow', label: 'Flow', icon: <Route className="h-3.5 w-3.5" /> },
+  { id: 'flow', label: 'States', icon: <Route className="h-3.5 w-3.5" /> },
   { id: 'timeline', label: 'Timeline', icon: <GitBranch className="h-3.5 w-3.5" /> },
   { id: 'traces', label: 'Traces', icon: <Activity className="h-3.5 w-3.5" /> },
   { id: 'diff', label: 'Diff', icon: <GitCompare className="h-3.5 w-3.5" /> },
-  { id: 'evals', label: 'Evals', icon: <TrendingUp className="h-3.5 w-3.5" /> },
-  { id: 'analytics', label: 'Analytics', icon: <BarChart3 className="h-3.5 w-3.5" /> },
+  { id: 'insights', label: 'Insights', icon: <BarChart3 className="h-3.5 w-3.5" /> },
   { id: 'showcase', label: 'About', icon: <BookOpen className="h-3.5 w-3.5" /> },
 ];
 
@@ -100,7 +99,9 @@ export function App() {
     onGoToFlow: () => setViewMode('flow'),
     onGoToTimeline: () => setViewMode('timeline'),
     onGoToTraces: () => setViewMode('traces'),
-    onGoToAnalytics: () => setViewMode('analytics'),
+    onGoToDiff: () => setViewMode('diff'),
+    onGoToInsights: () => setViewMode('insights'),
+    onGoToShowcase: () => setViewMode('showcase'),
   });
 
   if (showHero) {
@@ -406,14 +407,15 @@ export function App() {
             </motion.div>
           )}
 
-          {viewMode === 'analytics' && (
+          {viewMode === 'insights' && (
             <motion.div
-              key="analytics"
+              key="insights"
               initial={{ opacity: 0 }}
               animate={{ opacity: 1 }}
               exit={{ opacity: 0 }}
               className="flex-1 overflow-auto"
             >
+              <EvalTrends executions={allExecutions} />
               <AnalyticsPanel executions={allExecutions} costData={costData} stats={stats} />
             </motion.div>
           )}
@@ -443,18 +445,6 @@ export function App() {
               className="flex-1 overflow-auto p-4"
             >
               <PromptDiffViewer executions={allExecutions} />
-            </motion.div>
-          )}
-
-          {viewMode === 'evals' && (
-            <motion.div
-              key="evals"
-              initial={{ opacity: 0 }}
-              animate={{ opacity: 1 }}
-              exit={{ opacity: 0 }}
-              className="flex-1 overflow-auto"
-            >
-              <EvalTrends executions={allExecutions} />
             </motion.div>
           )}
 
