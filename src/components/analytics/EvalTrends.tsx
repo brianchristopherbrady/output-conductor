@@ -324,9 +324,9 @@ export function EvalTrends({ executions }: EvalTrendsProps) {
                   backgroundColor: isCritical ? 'var(--ds-status-error-bg)' : 'var(--ds-status-warning-bg)',
                 }}
               >
-                <div className="flex items-start justify-between gap-3">
-                  <div>
-                    <p className="text-sm font-semibold" style={{ color: isCritical ? 'var(--ds-status-error)' : 'var(--ds-status-warning)' }}>
+                <div className="flex items-start justify-between gap-2">
+                  <div className="min-w-0 flex-1">
+                    <p className="truncate text-sm font-semibold" style={{ color: isCritical ? 'var(--ds-status-error)' : 'var(--ds-status-warning)' }}>
                       {alert.evaluatorName}
                     </p>
                     <p className="mt-1 text-xs" style={{ color: 'var(--ds-text-secondary)' }}>
@@ -334,7 +334,7 @@ export function EvalTrends({ executions }: EvalTrendsProps) {
                     </p>
                   </div>
                   <span
-                    className="rounded-full border px-2 py-0.5 text-[11px] font-medium uppercase tracking-wide"
+                    className="shrink-0 rounded-full border px-2 py-0.5 text-[10px] font-medium uppercase tracking-wide"
                     style={{
                       borderColor: isCritical ? 'var(--ds-status-error-muted)' : 'var(--ds-status-warning-muted)',
                       color: isCritical ? 'var(--ds-status-error)' : 'var(--ds-status-warning)',

@@ -3,7 +3,7 @@ import { motion, AnimatePresence } from 'framer-motion';
 import {
   LayoutDashboard, GitBranch, Activity, BarChart3, Search,
   Filter, ChevronDown, Workflow, CheckCircle2, XCircle, Loader2, DollarSign, Zap, Clock, Settings, Route,
-  GitCompare, TrendingUp, Radio,
+  GitCompare, TrendingUp, Radio, BookOpen,
 } from 'lucide-react';
 import { useWorkflowData } from '@/hooks/useWorkflowData';
 import { useLiveMode } from '@/hooks/useLiveMode';
@@ -19,6 +19,7 @@ import { SettingsPanel } from '@/components/settings/SettingsPanel';
 import { FlowGraph } from '@/components/flow/FlowGraph';
 import { PromptDiffViewer } from '@/components/diff/PromptDiffViewer';
 import { EvalTrends } from '@/components/analytics/EvalTrends';
+import { ShowcasePage } from '@/components/showcase/ShowcasePage';
 import { CommandPalette, CommandAction } from '@/components/shared/CommandPalette';
 import { ToastNotification } from '@/components/shared/ToastNotification';
 import { ShortcutsHelp } from '@/components/shared/ShortcutsHelp';
@@ -33,6 +34,7 @@ const NAV_ITEMS: { id: ViewMode; label: string; icon: React.ReactNode }[] = [
   { id: 'diff', label: 'Diff', icon: <GitCompare className="h-3.5 w-3.5" /> },
   { id: 'evals', label: 'Evals', icon: <TrendingUp className="h-3.5 w-3.5" /> },
   { id: 'analytics', label: 'Analytics', icon: <BarChart3 className="h-3.5 w-3.5" /> },
+  { id: 'showcase', label: 'About', icon: <BookOpen className="h-3.5 w-3.5" /> },
 ];
 
 export function App() {
@@ -438,7 +440,7 @@ export function App() {
               initial={{ opacity: 0 }}
               animate={{ opacity: 1 }}
               exit={{ opacity: 0 }}
-              className="flex-1 overflow-hidden"
+              className="flex-1 overflow-auto p-4"
             >
               <PromptDiffViewer executions={allExecutions} />
             </motion.div>
@@ -450,9 +452,21 @@ export function App() {
               initial={{ opacity: 0 }}
               animate={{ opacity: 1 }}
               exit={{ opacity: 0 }}
-              className="flex-1 overflow-hidden"
+              className="flex-1 overflow-auto"
             >
               <EvalTrends executions={allExecutions} />
+            </motion.div>
+          )}
+
+          {viewMode === 'showcase' && (
+            <motion.div
+              key="showcase"
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              exit={{ opacity: 0 }}
+              className="flex-1 overflow-auto"
+            >
+              <ShowcasePage />
             </motion.div>
           )}
         </AnimatePresence>
