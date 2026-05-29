@@ -44,6 +44,18 @@ export function AnalyticsPanel({ executions, costData, stats }: AnalyticsPanelPr
     return Object.entries(counts).map(([name, value]) => ({ name, value }));
   }, [executions]);
 
+  const cardStyle = {
+    borderColor: 'var(--ds-card-border)',
+    backgroundColor: 'var(--ds-card-bg)',
+  };
+
+  const tooltipStyle = {
+    background: 'var(--ds-tooltip-bg)',
+    border: '1px solid var(--ds-border-primary)',
+    borderRadius: '8px',
+    color: 'var(--ds-tooltip-text)',
+  };
+
   return (
     <div className="space-y-6 p-4 overflow-auto h-full">
       {/* Top metrics */}
@@ -83,9 +95,10 @@ export function AnalyticsPanel({ executions, costData, stats }: AnalyticsPanelPr
         initial={{ opacity: 0, y: 12 }}
         animate={{ opacity: 1, y: 0 }}
         transition={{ delay: 0.1 }}
-        className="rounded-xl border border-zinc-800 bg-zinc-900/50 p-4"
+        className="rounded-xl border p-4"
+        style={cardStyle}
       >
-        <h3 className="mb-4 text-sm font-medium text-zinc-300">Cost Over Time</h3>
+        <h3 className="mb-4 text-sm font-medium" style={{ color: 'var(--ds-text-primary)' }}>Cost Over Time</h3>
         <ResponsiveContainer width="100%" height={220}>
           <AreaChart data={costData} margin={{ top: 5, right: 5, bottom: 5, left: 5 }}>
             <defs>
@@ -98,13 +111,10 @@ export function AnalyticsPanel({ executions, costData, stats }: AnalyticsPanelPr
                 <stop offset="95%" stopColor="#10b981" stopOpacity={0} />
               </linearGradient>
             </defs>
-            <CartesianGrid strokeDasharray="3 3" stroke="#27272a" />
-            <XAxis dataKey="date" tick={{ fill: '#71717a', fontSize: 11 }} axisLine={false} tickLine={false} />
-            <YAxis tick={{ fill: '#71717a', fontSize: 11 }} axisLine={false} tickLine={false} tickFormatter={(v) => `$${v}`} />
-            <Tooltip
-              contentStyle={{ background: '#18181b', border: '1px solid #3f3f46', borderRadius: '8px' }}
-              labelStyle={{ color: '#a1a1aa' }}
-            />
+            <CartesianGrid strokeDasharray="3 3" stroke="var(--ds-border-secondary)" />
+            <XAxis dataKey="date" tick={{ fill: 'var(--ds-text-muted)', fontSize: 11 }} axisLine={false} tickLine={false} />
+            <YAxis tick={{ fill: 'var(--ds-text-muted)', fontSize: 11 }} axisLine={false} tickLine={false} tickFormatter={(v) => `$${v}`} />
+            <Tooltip contentStyle={tooltipStyle} labelStyle={{ color: 'var(--ds-text-secondary)' }} />
             <Area type="monotone" dataKey="inputCost" stroke="#6366f1" fill="url(#colorInput)" name="Input Cost" />
             <Area type="monotone" dataKey="outputCost" stroke="#10b981" fill="url(#colorOutput)" name="Output Cost" />
           </AreaChart>
@@ -116,7 +126,6 @@ export function AnalyticsPanel({ executions, costData, stats }: AnalyticsPanelPr
         initial={{ opacity: 0, y: 12 }}
         animate={{ opacity: 1, y: 0 }}
         transition={{ delay: 0.15 }}
-        className="rounded-xl border border-zinc-800 bg-zinc-900/50 p-4"
       >
         <CostHeatmap costData={costData} />
       </motion.div>
@@ -128,17 +137,16 @@ export function AnalyticsPanel({ executions, costData, stats }: AnalyticsPanelPr
           initial={{ opacity: 0, y: 12 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ delay: 0.2 }}
-          className="rounded-xl border border-zinc-800 bg-zinc-900/50 p-4"
+          className="rounded-xl border p-4"
+          style={cardStyle}
         >
-          <h3 className="mb-4 text-sm font-medium text-zinc-300">Workflow Distribution</h3>
+          <h3 className="mb-4 text-sm font-medium" style={{ color: 'var(--ds-text-primary)' }}>Workflow Distribution</h3>
           <ResponsiveContainer width="100%" height={200}>
             <BarChart data={workflowDistribution} layout="vertical" margin={{ left: 80 }}>
-              <CartesianGrid strokeDasharray="3 3" stroke="#27272a" horizontal={false} />
-              <XAxis type="number" tick={{ fill: '#71717a', fontSize: 11 }} axisLine={false} tickLine={false} />
-              <YAxis type="category" dataKey="name" tick={{ fill: '#a1a1aa', fontSize: 11 }} axisLine={false} tickLine={false} width={80} />
-              <Tooltip
-                contentStyle={{ background: '#18181b', border: '1px solid #3f3f46', borderRadius: '8px' }}
-              />
+              <CartesianGrid strokeDasharray="3 3" stroke="var(--ds-border-secondary)" horizontal={false} />
+              <XAxis type="number" tick={{ fill: 'var(--ds-text-muted)', fontSize: 11 }} axisLine={false} tickLine={false} />
+              <YAxis type="category" dataKey="name" tick={{ fill: 'var(--ds-text-secondary)', fontSize: 11 }} axisLine={false} tickLine={false} width={80} />
+              <Tooltip contentStyle={tooltipStyle} />
               <Bar dataKey="value" fill="#6366f1" radius={[0, 4, 4, 0]} />
             </BarChart>
           </ResponsiveContainer>
@@ -149,9 +157,10 @@ export function AnalyticsPanel({ executions, costData, stats }: AnalyticsPanelPr
           initial={{ opacity: 0, y: 12 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ delay: 0.3 }}
-          className="rounded-xl border border-zinc-800 bg-zinc-900/50 p-4"
+          className="rounded-xl border p-4"
+          style={cardStyle}
         >
-          <h3 className="mb-4 text-sm font-medium text-zinc-300">Provider Breakdown</h3>
+          <h3 className="mb-4 text-sm font-medium" style={{ color: 'var(--ds-text-primary)' }}>Provider Breakdown</h3>
           <ResponsiveContainer width="100%" height={200}>
             <PieChart>
               <Pie
@@ -168,9 +177,7 @@ export function AnalyticsPanel({ executions, costData, stats }: AnalyticsPanelPr
                   <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
                 ))}
               </Pie>
-              <Tooltip
-                contentStyle={{ background: '#18181b', border: '1px solid #3f3f46', borderRadius: '8px' }}
-              />
+              <Tooltip contentStyle={tooltipStyle} />
             </PieChart>
           </ResponsiveContainer>
         </motion.div>
@@ -181,17 +188,16 @@ export function AnalyticsPanel({ executions, costData, stats }: AnalyticsPanelPr
         initial={{ opacity: 0, y: 12 }}
         animate={{ opacity: 1, y: 0 }}
         transition={{ delay: 0.4 }}
-        className="rounded-xl border border-zinc-800 bg-zinc-900/50 p-4"
+        className="rounded-xl border p-4"
+        style={cardStyle}
       >
-        <h3 className="mb-4 text-sm font-medium text-zinc-300">Daily Executions</h3>
+        <h3 className="mb-4 text-sm font-medium" style={{ color: 'var(--ds-text-primary)' }}>Daily Executions</h3>
         <ResponsiveContainer width="100%" height={160}>
           <BarChart data={costData} margin={{ top: 5, right: 5, bottom: 5, left: 5 }}>
-            <CartesianGrid strokeDasharray="3 3" stroke="#27272a" />
-            <XAxis dataKey="date" tick={{ fill: '#71717a', fontSize: 11 }} axisLine={false} tickLine={false} />
-            <YAxis tick={{ fill: '#71717a', fontSize: 11 }} axisLine={false} tickLine={false} />
-            <Tooltip
-              contentStyle={{ background: '#18181b', border: '1px solid #3f3f46', borderRadius: '8px' }}
-            />
+            <CartesianGrid strokeDasharray="3 3" stroke="var(--ds-border-secondary)" />
+            <XAxis dataKey="date" tick={{ fill: 'var(--ds-text-muted)', fontSize: 11 }} axisLine={false} tickLine={false} />
+            <YAxis tick={{ fill: 'var(--ds-text-muted)', fontSize: 11 }} axisLine={false} tickLine={false} />
+            <Tooltip contentStyle={tooltipStyle} />
             <Bar dataKey="executions" fill="#8b5cf6" radius={[4, 4, 0, 0]} name="Executions" />
           </BarChart>
         </ResponsiveContainer>
