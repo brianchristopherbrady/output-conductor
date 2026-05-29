@@ -20,7 +20,7 @@ export function TimelineView({ executions, onSelect }: TimelineViewProps) {
   }, [recentExecutions]);
 
   return (
-    <div className="h-full overflow-auto p-4">
+    <div className="p-4">
       <h3 className="mb-4 text-sm font-medium uppercase tracking-wider text-zinc-500">
         Execution Timeline (last 50)
       </h3>
