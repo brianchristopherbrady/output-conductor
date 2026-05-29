@@ -54,9 +54,9 @@ const RESPONSE_VARIATIONS = [
   (step: string, confidence: number) => `{"step": "${step}", "status": "done", "confidence": ${confidence}, "findings": ["Primary analysis complete", "No anomalies detected", "${randomBetween(1, 8)} sub-items processed"]}`,
 ];
 
-function generateTrace(stepName: string, index: number): Trace {
+function generateTrace(stepName: string, index: number, forceType?: Trace['type']): Trace {
   const types: Trace['type'][] = ['llm', 'http', 'tool', 'eval'];
-  const type = index === 0 ? 'http' : types[randomBetween(0, 3)];
+  const type = forceType ?? (index === 0 ? 'http' : index === 1 ? 'llm' : types[randomBetween(0, 3)]);
   const isError = Math.random() < 0.05;
 
   const base = {
@@ -109,8 +109,10 @@ function generateStep(name: string, workflowStart: Date, stepIndex: number, tota
     ? 'completed'
     : 'running';
 
-  const traceCount = isCached ? 1 : randomBetween(1, 4);
-  const traces = Array.from({ length: traceCount }, (_, i) => generateTrace(name, i));
+  const traceCount = isCached ? 1 : randomBetween(2, 4);
+  const traces = Array.from({ length: traceCount }, (_, i) =>
+    generateTrace(name, i, isCached ? 'llm' : undefined)
+  );
 
   return {
     id: `step_${Math.random().toString(36).substring(2, 10)}`,
