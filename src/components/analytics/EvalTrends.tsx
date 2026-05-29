@@ -1,4 +1,4 @@
-import { useMemo } from 'react';
+import { useMemo, useState } from 'react';
 import { format, endOfDay, parseISO, startOfDay, subDays } from 'date-fns';
 import {
   Bar,
@@ -190,6 +190,23 @@ export function EvalTrends({ executions }: EvalTrendsProps) {
     return { evaluatorNames, passRateData, confidenceData, alerts };
   }, [executions]);
 
+  const [visibleEvaluators, setVisibleEvaluators] = useState<Set<string> | null>(null);
+
+  const activeEvaluators = visibleEvaluators ?? new Set(evaluatorNames);
+
+  function toggleEvaluator(name: string) {
+    setVisibleEvaluators(prev => {
+      const current = prev ?? new Set(evaluatorNames);
+      const next = new Set(current);
+      if (next.has(name)) {
+        next.delete(name);
+      } else {
+        next.add(name);
+      }
+      return next;
+    });
+  }
+
   return (
     <section className="space-y-6 p-4 md:p-6">
       {/* Regression alerts as top banner */}
@@ -294,6 +311,7 @@ export function EvalTrends({ executions }: EvalTrendsProps) {
                   dot={false}
                   connectNulls
                   isAnimationActive={false}
+                  hide={!activeEvaluators.has(evaluatorName)}
                 />
               ))}
             </LineChart>
@@ -305,23 +323,28 @@ export function EvalTrends({ executions }: EvalTrendsProps) {
         )}
 
         <div className="mt-4 flex flex-wrap gap-2 text-xs">
-          {evaluatorNames.map((name, index) => (
-            <span
-              key={name}
-              className="inline-flex items-center gap-2 rounded-full border px-2.5 py-1"
-              style={{
-                borderColor: 'var(--ds-border-secondary)',
-                backgroundColor: 'var(--ds-bg-secondary)',
-                color: 'var(--ds-text-secondary)',
-              }}
-            >
-              <span
-                className="h-2 w-2 rounded-full"
-                style={{ backgroundColor: EVALUATOR_COLORS[index % EVALUATOR_COLORS.length] }}
-              />
-              {name}
-            </span>
-          ))}
+          {evaluatorNames.map((name, index) => {
+            const isActive = activeEvaluators.has(name);
+            return (
+              <button
+                key={name}
+                onClick={() => toggleEvaluator(name)}
+                className="inline-flex items-center gap-2 rounded-full border px-2.5 py-1 transition-all"
+                style={{
+                  borderColor: isActive ? EVALUATOR_COLORS[index % EVALUATOR_COLORS.length] : 'var(--ds-border-secondary)',
+                  backgroundColor: isActive ? `${EVALUATOR_COLORS[index % EVALUATOR_COLORS.length]}15` : 'var(--ds-bg-secondary)',
+                  color: isActive ? 'var(--ds-text-primary)' : 'var(--ds-text-muted)',
+                  opacity: isActive ? 1 : 0.5,
+                }}
+              >
+                <span
+                  className="h-2 w-2 rounded-full"
+                  style={{ backgroundColor: EVALUATOR_COLORS[index % EVALUATOR_COLORS.length] }}
+                />
+                {name}
+              </button>
+            );
+          })}
         </div>
       </div>
 
