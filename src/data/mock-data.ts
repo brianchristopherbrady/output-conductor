@@ -30,13 +30,29 @@ const STEP_NAMES: Record<string, string[]> = {
 const MODELS = ['claude-sonnet-4-20250514', 'claude-haiku-3-20250414', 'gpt-4o', 'gpt-4o-mini'];
 const PROVIDERS: ('anthropic' | 'openai' | 'azure' | 'vertex')[] = ['anthropic', 'openai', 'azure', 'vertex'];
 
+function randomBetween(min: number, max: number): number {
+  return Math.floor(Math.random() * (max - min + 1)) + min;
+}
+
 function randomId(): string {
   return `wf_${Math.random().toString(36).substring(2, 10)}`;
 }
 
-function randomBetween(min: number, max: number): number {
-  return Math.floor(Math.random() * (max - min + 1)) + min;
-}
+const PROMPT_VARIATIONS = [
+  (step: string) => `You are a ${step} specialist. Analyze the following content and provide structured output.\n\nContext: Process the input data according to standard ${step} guidelines.\nFormat: JSON\nMax tokens: 2048`,
+  (step: string) => `You are an expert ${step} agent. Your task is to carefully analyze the provided input and return a well-structured result.\n\nInstructions:\n1. Parse the input thoroughly\n2. Apply ${step} logic\n3. Return valid JSON with confidence scores\n\nBe concise and precise.`,
+  (step: string) => `System: You are a specialized ${step} processor.\nRole: Senior analyst\nObjective: Extract structured insights from the given content.\n\nRules:\n- Output must be valid JSON\n- Include metadata fields\n- Flag any anomalies detected during ${step}`,
+  (step: string) => `[${step.toUpperCase()}] Process the following input.\n\nYou must:\n- Analyze content for relevance\n- Score quality on a 0-100 scale\n- Provide reasoning for your assessment\n- Return structured JSON output\n\nTemperature: 0.3\nModel behavior: deterministic`,
+  (step: string) => `As a ${step} specialist, evaluate the following:\n\nPriority: accuracy over speed\nOutput schema: { "result": string, "confidence": number, "flags": string[] }\n\nProcess step: ${step}\nVersion: 2.1.0`,
+];
+
+const RESPONSE_VARIATIONS = [
+  (step: string, confidence: number) => `{"result": "Analysis complete for ${step}", "confidence": ${confidence}, "flags": [], "processingTime": "${randomBetween(100, 900)}ms"}`,
+  (step: string, confidence: number) => `{\n  "result": "${step} evaluation passed",\n  "confidence": ${confidence},\n  "details": {\n    "itemsProcessed": ${randomBetween(3, 15)},\n    "warnings": ${randomBetween(0, 2)}\n  }\n}`,
+  (step: string, confidence: number) => `{"status": "success", "step": "${step}", "output": {"score": ${confidence}, "categories": [${randomBetween(2, 5)} items], "summary": "Processed successfully"}}`,
+  (step: string, confidence: number) => `{\n  "result": "Completed ${step}",\n  "confidence": ${confidence / 100},\n  "metadata": {\n    "model": "v2",\n    "tokens_used": ${randomBetween(200, 1500)},\n    "latency_ms": ${randomBetween(80, 600)}\n  },\n  "output": "Structured analysis complete"\n}`,
+  (step: string, confidence: number) => `{"step": "${step}", "status": "done", "confidence": ${confidence}, "findings": ["Primary analysis complete", "No anomalies detected", "${randomBetween(1, 8)} sub-items processed"]}`,
+];
 
 function generateTrace(stepName: string, index: number): Trace {
   const types: Trace['type'][] = ['llm', 'http', 'tool', 'eval'];
@@ -62,8 +78,8 @@ function generateTrace(stepName: string, index: number): Trace {
       inputTokens,
       outputTokens,
       cost: (inputTokens * 0.000003 + outputTokens * 0.000015),
-      prompt: `You are a ${stepName} specialist. Analyze the following content and provide structured output...`,
-      response: isError ? undefined : `{"result": "Analysis complete", "confidence": ${randomBetween(70, 99)}}`,
+      prompt: PROMPT_VARIATIONS[randomBetween(0, PROMPT_VARIATIONS.length - 1)](stepName),
+      response: isError ? undefined : RESPONSE_VARIATIONS[randomBetween(0, RESPONSE_VARIATIONS.length - 1)](stepName, randomBetween(70, 99)),
       error: isError ? 'Rate limit exceeded. Retrying in 2s...' : undefined,
     };
   } else if (type === 'http') {
