@@ -57,7 +57,7 @@ export function AnalyticsPanel({ executions, costData, stats }: AnalyticsPanelPr
   };
 
   return (
-    <div className="space-y-6 p-4 overflow-auto h-full">
+    <div className="space-y-6 overflow-auto h-full" style={{ padding: `var(--ds-panel-py, 12px) var(--ds-panel-px, 16px)` }}>
       {/* Top metrics */}
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3">
         <MetricCard

@@ -2,6 +2,8 @@ import { useRef, useMemo } from 'react';
 import { useVirtualizer } from '@tanstack/react-virtual';
 import { WorkflowExecution, Trace } from '@/types';
 import { formatDuration, getStatusBackground, getStatusColor } from '@/utils';
+import { useDesignSystem } from '@/design-system';
+import { DENSITY_CONFIG } from '@/design-system/tokens';
 
 interface TracesViewProps {
   executions: WorkflowExecution[];
@@ -38,6 +40,9 @@ function getTraceTypeStyles(type: Trace['type']) {
 
 export function TracesView({ executions }: TracesViewProps) {
   const parentRef = useRef<HTMLDivElement>(null);
+  const { density } = useDesignSystem();
+
+  const traceRowHeight = parseInt(DENSITY_CONFIG[density].tableRowHeight, 10);
 
   const allTraces = useMemo(() => {
     return executions
@@ -58,15 +63,15 @@ export function TracesView({ executions }: TracesViewProps) {
   const virtualizer = useVirtualizer({
     count: allTraces.length,
     getScrollElement: () => parentRef.current,
-    estimateSize: () => 44,
+    estimateSize: () => traceRowHeight,
     overscan: 20,
   });
 
   return (
     <div className="flex h-full flex-col">
       <div
-        className="flex items-center justify-between border-b px-4 py-3"
-        style={{ borderColor: 'var(--ds-border-primary)' }}
+        className="flex items-center justify-between border-b"
+        style={{ borderColor: 'var(--ds-border-primary)', padding: `var(--ds-section-py, 12px) var(--ds-panel-px, 16px)` }}
       >
         <h3 className="text-sm font-medium text-[var(--ds-text-primary)]">
           All Traces ({allTraces.length.toLocaleString()})
@@ -88,8 +93,8 @@ export function TracesView({ executions }: TracesViewProps) {
       </div>
 
       <div
-        className="grid grid-cols-[80px_1fr_120px_100px_80px_80px] gap-2 border-b px-4 py-2 text-[10px] uppercase tracking-wider text-[var(--ds-text-tertiary)]"
-        style={{ borderColor: 'var(--ds-border-primary)' }}
+        className="grid grid-cols-[80px_1fr_120px_100px_80px_80px] gap-2 border-b text-[10px] uppercase tracking-wider text-[var(--ds-text-tertiary)]"
+        style={{ borderColor: 'var(--ds-border-primary)', padding: 'var(--ds-table-header-padding, 8px 16px)' }}
       >
         <span>Type</span>
         <span>Name</span>
@@ -122,9 +127,10 @@ export function TracesView({ executions }: TracesViewProps) {
                 }}
               >
                 <div
-                  className="grid grid-cols-[80px_1fr_120px_100px_80px_80px] items-center gap-2 border-b px-4 py-2 text-xs transition-colors hover:bg-[var(--ds-bg-secondary)]"
+                  className="grid grid-cols-[80px_1fr_120px_100px_80px_80px] items-center gap-2 border-b text-xs transition-colors hover:bg-[var(--ds-bg-secondary)]"
                   style={{
                     borderColor: 'var(--ds-border-primary)',
+                    padding: 'var(--ds-table-header-padding, 8px 16px)',
                     backgroundColor:
                       trace.status === 'error' ? getStatusBackground(trace.status) : 'transparent',
                   }}

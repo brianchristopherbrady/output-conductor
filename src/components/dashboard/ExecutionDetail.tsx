@@ -59,10 +59,11 @@ function StepCard({ step, index }: { step: StepExecution; index: number }) {
       initial={{ opacity: 0, x: -12 }}
       animate={{ opacity: 1, x: 0 }}
       transition={{ delay: index * 0.05 }}
-      className="relative rounded-xl border p-4 shadow-sm"
+      className="relative rounded-xl border shadow-sm"
       style={{
         borderColor: stepBorderColor,
         backgroundColor: 'var(--ds-bg-secondary)',
+        padding: `var(--ds-panel-py, 12px) var(--ds-panel-px, 16px)`,
       }}
     >
       {index > 0 && (
@@ -196,8 +197,8 @@ export function ExecutionDetail({ execution, onClose }: ExecutionDetailProps) {
         }}
       >
         <div
-          className="flex items-center justify-between border-b px-4 py-3"
-          style={{ borderColor: 'var(--ds-border-primary)' }}
+          className="flex items-center justify-between border-b"
+          style={{ borderColor: 'var(--ds-border-primary)', padding: `var(--ds-section-py, 12px) var(--ds-panel-px, 16px)` }}
         >
           <div>
             <div className="flex items-center gap-2">
@@ -217,8 +218,8 @@ export function ExecutionDetail({ execution, onClose }: ExecutionDetailProps) {
         </div>
 
         <div
-          className="grid grid-cols-4 gap-2 border-b px-4 py-3"
-          style={{ borderColor: 'var(--ds-border-primary)' }}
+          className="grid grid-cols-4 gap-2 border-b"
+          style={{ borderColor: 'var(--ds-border-primary)', padding: `var(--ds-section-py, 12px) var(--ds-panel-px, 16px)` }}
         >
           <div className="text-center">
             <p className="text-[10px] uppercase tracking-wider text-[var(--ds-text-muted)]">Duration</p>
@@ -246,7 +247,7 @@ export function ExecutionDetail({ execution, onClose }: ExecutionDetailProps) {
           </div>
         </div>
 
-        <div className="flex-1 overflow-auto px-4 py-3">
+        <div className="flex-1 overflow-auto" style={{ padding: `var(--ds-section-py, 12px) var(--ds-panel-px, 16px)` }}>
           <h3 className="mb-3 text-xs font-medium uppercase tracking-wider text-[var(--ds-text-muted)]">
             Execution Steps ({execution.steps.length})
           </h3>
@@ -258,8 +259,8 @@ export function ExecutionDetail({ execution, onClose }: ExecutionDetailProps) {
         </div>
 
         <div
-          className="border-t px-4 py-2"
-          style={{ borderColor: 'var(--ds-border-primary)' }}
+          className="border-t"
+          style={{ borderColor: 'var(--ds-border-primary)', padding: `var(--ds-control-py, 6px) var(--ds-panel-px, 16px)` }}
         >
           <div className="flex items-center justify-between text-xs text-[var(--ds-text-muted)]">
             <span className="flex items-center gap-1">

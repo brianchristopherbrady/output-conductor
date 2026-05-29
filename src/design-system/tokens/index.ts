@@ -126,6 +126,20 @@ export const DENSITY_CONFIG: Record<DensityMode, {
   badgePadding: string;
   inputHeight: string;
   borderRadius: string;
+  panelPaddingX: string;
+  panelPaddingY: string;
+  sectionPaddingX: string;
+  sectionPaddingY: string;
+  tableRowHeight: string;
+  tableHeaderPadding: string;
+  iconSizeSm: string;
+  iconSizeMd: string;
+  iconSizeLg: string;
+  controlPaddingX: string;
+  controlPaddingY: string;
+  statsGap: string;
+  navButtonPaddingX: string;
+  navButtonPaddingY: string;
 }> = {
   compact: {
     cardPaddingX: '10px',
@@ -138,6 +152,20 @@ export const DENSITY_CONFIG: Record<DensityMode, {
     badgePadding: '1px 6px',
     inputHeight: '28px',
     borderRadius: '6px',
+    panelPaddingX: '12px',
+    panelPaddingY: '8px',
+    sectionPaddingX: '16px',
+    sectionPaddingY: '8px',
+    tableRowHeight: '34px',
+    tableHeaderPadding: '6px 12px',
+    iconSizeSm: '10px',
+    iconSizeMd: '12px',
+    iconSizeLg: '14px',
+    controlPaddingX: '8px',
+    controlPaddingY: '4px',
+    statsGap: '10px',
+    navButtonPaddingX: '8px',
+    navButtonPaddingY: '4px',
   },
   comfortable: {
     cardPaddingX: '14px',
@@ -150,6 +178,20 @@ export const DENSITY_CONFIG: Record<DensityMode, {
     badgePadding: '2px 8px',
     inputHeight: '34px',
     borderRadius: '8px',
+    panelPaddingX: '16px',
+    panelPaddingY: '12px',
+    sectionPaddingX: '24px',
+    sectionPaddingY: '12px',
+    tableRowHeight: '44px',
+    tableHeaderPadding: '8px 16px',
+    iconSizeSm: '12px',
+    iconSizeMd: '14px',
+    iconSizeLg: '16px',
+    controlPaddingX: '12px',
+    controlPaddingY: '6px',
+    statsGap: '16px',
+    navButtonPaddingX: '12px',
+    navButtonPaddingY: '6px',
   },
   spacious: {
     cardPaddingX: '20px',
@@ -162,5 +204,19 @@ export const DENSITY_CONFIG: Record<DensityMode, {
     badgePadding: '4px 10px',
     inputHeight: '40px',
     borderRadius: '12px',
+    panelPaddingX: '24px',
+    panelPaddingY: '16px',
+    sectionPaddingX: '32px',
+    sectionPaddingY: '16px',
+    tableRowHeight: '56px',
+    tableHeaderPadding: '12px 24px',
+    iconSizeSm: '14px',
+    iconSizeMd: '16px',
+    iconSizeLg: '20px',
+    controlPaddingX: '16px',
+    controlPaddingY: '8px',
+    statsGap: '20px',
+    navButtonPaddingX: '16px',
+    navButtonPaddingY: '8px',
   },
 };

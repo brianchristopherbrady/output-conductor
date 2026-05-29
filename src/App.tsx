@@ -269,7 +269,7 @@ export function App() {
         {/* Stats bar + Nav */}
         <div className="mt-2.5 flex items-center justify-between">
           {/* Quick stats */}
-          <div className="flex items-center gap-4">
+          <div className="flex items-center" style={{ gap: 'var(--ds-stats-gap, 16px)' }}>
             <div className="flex items-center gap-1.5">
               <CheckCircle2 className="h-3.5 w-3.5" style={{ color: 'var(--ds-status-success)' }} />
               <span className="text-xs" style={{ color: 'var(--ds-text-secondary)' }}>
@@ -318,8 +318,9 @@ export function App() {
               <button
                 key={item.id}
                 onClick={() => setViewMode(item.id)}
-                className="flex items-center gap-1.5 rounded-md px-3 py-1.5 text-xs font-medium transition-all"
+                className="flex items-center gap-1.5 rounded-md text-xs font-medium transition-all"
                 style={{
+                  padding: `var(--ds-nav-btn-py, 6px) var(--ds-nav-btn-px, 12px)`,
                   backgroundColor: viewMode === item.id ? 'var(--ds-nav-active)' : 'transparent',
                   color: viewMode === item.id ? 'var(--ds-nav-active-text)' : 'var(--ds-text-muted)',
                 }}
@@ -345,16 +346,21 @@ export function App() {
             >
               {/* Execution list */}
               <div
-                className={cn(
-                  'flex flex-col overflow-hidden border-r transition-all',
-                  selectedExecution ? 'w-1/2' : 'w-full max-w-5xl mx-auto',
-                )}
-                style={{ borderColor: 'var(--ds-border-secondary)' }}
+                className="flex flex-col overflow-hidden border-r transition-all"
+                style={{
+                  borderColor: 'var(--ds-border-secondary)',
+                  width: selectedExecution ? '50%' : undefined,
+                  maxWidth: selectedExecution ? undefined : '80rem',
+                  marginInline: selectedExecution ? undefined : 'auto',
+                }}
               >
-                <div
-                  className="px-6 py-3 border-b flex items-center justify-between"
-                  style={{ borderColor: 'var(--ds-border-secondary)' }}
-                >
+              <div
+                className="border-b flex items-center justify-between"
+                style={{
+                  borderColor: 'var(--ds-border-secondary)',
+                  padding: `var(--ds-section-py, 12px) var(--ds-section-px, 24px)`,
+                }}
+              >
                   <p className="text-sm font-medium" style={{ color: 'var(--ds-text-tertiary)' }}>
                     {executions.length} workflow executions
                   </p>

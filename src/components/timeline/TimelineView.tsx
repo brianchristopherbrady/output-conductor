@@ -31,7 +31,7 @@ export function TimelineView({ executions, onSelect }: TimelineViewProps) {
   }, [recentExecutions]);
 
   return (
-    <div className="p-4">
+    <div style={{ padding: `var(--ds-panel-py, 12px) var(--ds-panel-px, 16px)` }}>
       <h3 className="mb-4 text-sm font-medium uppercase tracking-wider text-[var(--ds-text-muted)]">
         Execution Timeline (last 50)
       </h3>

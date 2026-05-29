@@ -51,6 +51,20 @@ function applyDensityToDOM(density: DensityMode) {
   root.style.setProperty('--ds-badge-padding', config.badgePadding);
   root.style.setProperty('--ds-input-height', config.inputHeight);
   root.style.setProperty('--ds-border-radius', config.borderRadius);
+  root.style.setProperty('--ds-panel-px', config.panelPaddingX);
+  root.style.setProperty('--ds-panel-py', config.panelPaddingY);
+  root.style.setProperty('--ds-section-px', config.sectionPaddingX);
+  root.style.setProperty('--ds-section-py', config.sectionPaddingY);
+  root.style.setProperty('--ds-table-row-height', config.tableRowHeight);
+  root.style.setProperty('--ds-table-header-padding', config.tableHeaderPadding);
+  root.style.setProperty('--ds-icon-size-sm', config.iconSizeSm);
+  root.style.setProperty('--ds-icon-size-md', config.iconSizeMd);
+  root.style.setProperty('--ds-icon-size-lg', config.iconSizeLg);
+  root.style.setProperty('--ds-control-px', config.controlPaddingX);
+  root.style.setProperty('--ds-control-py', config.controlPaddingY);
+  root.style.setProperty('--ds-stats-gap', config.statsGap);
+  root.style.setProperty('--ds-nav-btn-px', config.navButtonPaddingX);
+  root.style.setProperty('--ds-nav-btn-py', config.navButtonPaddingY);
   root.setAttribute('data-density', density);
 }
 

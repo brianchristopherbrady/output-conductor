@@ -191,8 +191,8 @@ export function FlowGraph({ executions, selectedExecution, onSelectExecution }: 
     <div className="flex h-full flex-col overflow-hidden">
       {/* Header */}
       <div
-        className="flex items-center justify-between border-b px-4 py-2"
-        style={{ borderColor: 'var(--ds-border-secondary)', backgroundColor: 'var(--ds-bg-secondary)' }}
+        className="flex items-center justify-between border-b"
+        style={{ borderColor: 'var(--ds-border-secondary)', backgroundColor: 'var(--ds-bg-secondary)', padding: 'var(--ds-table-header-padding, 8px 16px)' }}
       >
         <div className="flex items-center gap-2">
           <Route className="h-4 w-4" style={{ color: 'var(--ds-text-muted)' }} />
@@ -219,8 +219,8 @@ export function FlowGraph({ executions, selectedExecution, onSelectExecution }: 
       </div>
 
       {/* Workflow selector */}
-      <div className="flex items-center gap-2 border-b px-4 py-1.5 overflow-x-auto"
-        style={{ borderColor: 'var(--ds-border-secondary)' }}>
+      <div className="flex items-center gap-2 border-b overflow-x-auto"
+        style={{ borderColor: 'var(--ds-border-secondary)', padding: `var(--ds-control-py, 6px) var(--ds-panel-px, 16px)` }}>
         {workflows.map(wf => (
           <button key={wf.name} onClick={() => { setSelectedWorkflow(wf.name); clearRun(); }}
             className={cn(
