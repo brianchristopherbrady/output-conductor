@@ -265,109 +265,106 @@ export function EvalTrends({ executions }: EvalTrendsProps) {
         </div>
       </div>
 
-      <div className="grid grid-cols-1 gap-4 xl:grid-cols-2">
-        <div className="rounded-2xl border p-4" style={cardStyle}>
-          <div className="mb-4 flex flex-wrap items-start justify-between gap-3">
-            <div>
-              <h3 className="text-sm font-medium" style={{ color: 'var(--ds-text-primary)' }}>Pass Rate Over Time</h3>
-              <p className="text-xs" style={{ color: 'var(--ds-text-muted)' }}>Grouped by day across all step evaluations.</p>
-            </div>
-            <div className="flex flex-wrap gap-2 text-xs">
-              {evaluatorNames.map((name, index) => (
-                <span
-                  key={name}
-                  className="inline-flex items-center gap-2 rounded-full border px-2.5 py-1"
-                  style={{
-                    borderColor: 'var(--ds-border-secondary)',
-                    backgroundColor: 'var(--ds-bg-secondary)',
-                    color: 'var(--ds-text-secondary)',
-                  }}
-                >
-                  <span
-                    className="h-2 w-2 rounded-full"
-                    style={{ backgroundColor: EVALUATOR_COLORS[index % EVALUATOR_COLORS.length] }}
-                  />
-                  {name}
-                </span>
-              ))}
-            </div>
-          </div>
-
-          {passRateData.length > 0 ? (
-            <ResponsiveContainer width="100%" height={280}>
-              <LineChart data={passRateData} margin={{ top: 8, right: 12, left: 0, bottom: 0 }}>
-                <XAxis
-                  dataKey="day"
-                  tick={{ fill: 'var(--ds-text-muted)', fontSize: 11 }}
-                  axisLine={false}
-                  tickLine={false}
-                />
-                <YAxis
-                  domain={[0, 100]}
-                  tickFormatter={(value) => `${value}%`}
-                  tick={{ fill: 'var(--ds-text-muted)', fontSize: 11 }}
-                  axisLine={false}
-                  tickLine={false}
-                  width={38}
-                />
-                <Tooltip
-                  contentStyle={tooltipStyle}
-                  labelStyle={{ color: 'var(--ds-text-secondary)' }}
-                />
-                {evaluatorNames.map((evaluatorName, index) => (
-                  <Line
-                    key={evaluatorName}
-                    type="monotone"
-                    name={evaluatorName}
-                    dataKey={(point: PassRatePoint) => point.rates[evaluatorName] ?? null}
-                    stroke={EVALUATOR_COLORS[index % EVALUATOR_COLORS.length]}
-                    strokeWidth={2.5}
-                    unit="%"
-                    dot={false}
-                    connectNulls
-                    isAnimationActive={false}
-                  />
-                ))}
-              </LineChart>
-            </ResponsiveContainer>
-          ) : (
-            <div className="flex h-[280px] items-center justify-center rounded-xl border border-dashed text-sm" style={{ borderColor: 'var(--ds-border-secondary)', color: 'var(--ds-text-muted)' }}>
-              No evaluation data available yet.
-            </div>
-          )}
+      <div className="rounded-2xl border p-4" style={cardStyle}>
+        <div className="mb-4">
+          <h3 className="text-sm font-medium" style={{ color: 'var(--ds-text-primary)' }}>Pass Rate Over Time</h3>
+          <p className="text-xs" style={{ color: 'var(--ds-text-muted)' }}>Grouped by day across all step evaluations.</p>
         </div>
 
-        <div className="rounded-2xl border p-4" style={cardStyle}>
-          <div className="mb-4">
-            <h3 className="text-sm font-medium" style={{ color: 'var(--ds-text-primary)' }}>Confidence Distribution</h3>
-            <p className="text-xs" style={{ color: 'var(--ds-text-muted)' }}>Histogram of confidence buckets split by pass and fail outcomes.</p>
-          </div>
-
+        {passRateData.length > 0 ? (
           <ResponsiveContainer width="100%" height={280}>
-            <BarChart data={confidenceData} margin={{ top: 8, right: 12, left: 0, bottom: 0 }}>
+            <LineChart data={passRateData} margin={{ top: 8, right: 12, left: 0, bottom: 0 }}>
               <XAxis
-                dataKey="bucket"
+                dataKey="day"
                 tick={{ fill: 'var(--ds-text-muted)', fontSize: 11 }}
                 axisLine={false}
                 tickLine={false}
               />
               <YAxis
-                allowDecimals={false}
+                domain={[0, 100]}
+                tickFormatter={(value) => `${value}%`}
                 tick={{ fill: 'var(--ds-text-muted)', fontSize: 11 }}
                 axisLine={false}
                 tickLine={false}
-                width={28}
+                width={38}
               />
               <Tooltip
                 contentStyle={tooltipStyle}
                 labelStyle={{ color: 'var(--ds-text-secondary)' }}
-                labelFormatter={(label) => `Confidence ${label}`}
               />
-              <Bar dataKey="passed" name="passed" fill="var(--ds-status-success)" radius={[6, 6, 0, 0]} />
-              <Bar dataKey="failed" name="failed" fill="var(--ds-status-error)" radius={[6, 6, 0, 0]} />
-            </BarChart>
+              {evaluatorNames.map((evaluatorName, index) => (
+                <Line
+                  key={evaluatorName}
+                  type="monotone"
+                  name={evaluatorName}
+                  dataKey={(point: PassRatePoint) => point.rates[evaluatorName] ?? null}
+                  stroke={EVALUATOR_COLORS[index % EVALUATOR_COLORS.length]}
+                  strokeWidth={2.5}
+                  unit="%"
+                  dot={false}
+                  connectNulls
+                  isAnimationActive={false}
+                />
+              ))}
+            </LineChart>
           </ResponsiveContainer>
+        ) : (
+          <div className="flex h-[280px] items-center justify-center rounded-xl border border-dashed text-sm" style={{ borderColor: 'var(--ds-border-secondary)', color: 'var(--ds-text-muted)' }}>
+            No evaluation data available yet.
+          </div>
+        )}
+
+        <div className="mt-4 flex flex-wrap gap-2 text-xs">
+          {evaluatorNames.map((name, index) => (
+            <span
+              key={name}
+              className="inline-flex items-center gap-2 rounded-full border px-2.5 py-1"
+              style={{
+                borderColor: 'var(--ds-border-secondary)',
+                backgroundColor: 'var(--ds-bg-secondary)',
+                color: 'var(--ds-text-secondary)',
+              }}
+            >
+              <span
+                className="h-2 w-2 rounded-full"
+                style={{ backgroundColor: EVALUATOR_COLORS[index % EVALUATOR_COLORS.length] }}
+              />
+              {name}
+            </span>
+          ))}
         </div>
+      </div>
+
+      <div className="rounded-2xl border p-4" style={cardStyle}>
+        <div className="mb-4">
+          <h3 className="text-sm font-medium" style={{ color: 'var(--ds-text-primary)' }}>Confidence Distribution</h3>
+          <p className="text-xs" style={{ color: 'var(--ds-text-muted)' }}>Histogram of confidence buckets split by pass and fail outcomes.</p>
+        </div>
+
+        <ResponsiveContainer width="100%" height={280}>
+          <BarChart data={confidenceData} margin={{ top: 8, right: 12, left: 0, bottom: 0 }}>
+            <XAxis
+              dataKey="bucket"
+              tick={{ fill: 'var(--ds-text-muted)', fontSize: 11 }}
+              axisLine={false}
+              tickLine={false}
+            />
+            <YAxis
+              allowDecimals={false}
+              tick={{ fill: 'var(--ds-text-muted)', fontSize: 11 }}
+              axisLine={false}
+              tickLine={false}
+              width={28}
+            />
+            <Tooltip
+              contentStyle={tooltipStyle}
+              labelStyle={{ color: 'var(--ds-text-secondary)' }}
+              labelFormatter={(label) => `Confidence ${label}`}
+            />
+            <Bar dataKey="passed" name="passed" fill="var(--ds-status-success)" radius={[6, 6, 0, 0]} />
+            <Bar dataKey="failed" name="failed" fill="var(--ds-status-error)" radius={[6, 6, 0, 0]} />
+          </BarChart>
+        </ResponsiveContainer>
       </div>
     </section>
   );
