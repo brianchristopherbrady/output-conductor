@@ -148,7 +148,7 @@ export function App() {
               </div>
               <div>
                 <h1 className="text-sm font-bold tracking-tight" style={{ color: 'var(--ds-text-primary)' }}>Conductor</h1>
-                <p className="text-xs" style={{ color: 'var(--ds-text-muted)' }}>Output.ai Workflow Observatory</p>
+                <p className="text-xs" style={{ color: 'var(--ds-text-muted)' }}>Meridian Health • Output.ai</p>
               </div>
             </div>
           </div>

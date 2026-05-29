@@ -1,30 +1,34 @@
 import { WorkflowExecution, StepExecution, Trace, CostBreakdown } from '@/types';
 import { subHours, subMinutes, subDays, format } from 'date-fns';
 
+// ─── Demo Scenario: Meridian Health ───────────────────────────────────────────
+// A healthtech company using Output.ai to automate clinical documentation,
+// patient intake, insurance processing, and care coordination workflows.
+
 const WORKFLOW_NAMES = [
-  'research_company',
-  'blog_evaluator',
-  'changelog_generator',
-  'dependency_audit',
-  'sales_call_processor',
-  'ai_hn_digest',
-  'url_summarizer',
-  'youtube_summarizer',
-  'recipe_extractor',
-  'call_scorer',
+  'patient_intake',
+  'clinical_notes',
+  'insurance_verify',
+  'lab_results',
+  'referral_router',
+  'discharge_summary',
+  'prior_auth',
+  'appointment_prep',
+  'rx_review',
+  'care_plan',
 ];
 
 const STEP_NAMES: Record<string, string[]> = {
-  research_company: ['scrapeWebsite', 'extractContent', 'analyzeCompetitors', 'generateBrief'],
-  blog_evaluator: ['fetchArticle', 'extractSignals', 'scoreQuality', 'generateReport'],
-  changelog_generator: ['fetchCommits', 'categorizeChanges', 'generateMarkdown', 'publishChangelog'],
-  dependency_audit: ['scanDependencies', 'checkVulnerabilities', 'analyzeLicenses', 'scoreHealth'],
-  sales_call_processor: ['transcribeCall', 'extractInsights', 'scoreMethodology', 'generateNotes'],
-  ai_hn_digest: ['fetchTopStories', 'scoreRelevance', 'summarizeArticles', 'composeNewsletter', 'publishToBeehiiv'],
-  url_summarizer: ['fetchPage', 'extractContent', 'generateSummary'],
-  youtube_summarizer: ['fetchTranscript', 'identifyMoments', 'generateSummary'],
-  recipe_extractor: ['fetchPage', 'extractRecipe', 'normalizeUnits', 'validateSchema'],
-  call_scorer: ['parseTranscript', 'identifyFramework', 'scoreCategories', 'generateFeedback'],
+  patient_intake: ['parseFormData', 'verifyIdentity', 'matchMedicalRecord', 'flagAlerts'],
+  clinical_notes: ['transcribeVisit', 'extractDiagnoses', 'codeProcedures', 'generateNote'],
+  insurance_verify: ['lookupPlan', 'checkEligibility', 'validateCoverage', 'returnBenefits'],
+  lab_results: ['parseHL7', 'normalizeValues', 'flagAbnormals', 'notifyProvider'],
+  referral_router: ['classifySpecialty', 'checkAvailability', 'matchProvider', 'sendReferral'],
+  discharge_summary: ['aggregateVisit', 'summarizeTreatment', 'listMedications', 'generateInstructions'],
+  prior_auth: ['extractClinicalInfo', 'matchCriteria', 'generateLetter', 'submitToPayor'],
+  appointment_prep: ['pullHistory', 'summarizeRecent', 'flagOverdue', 'prepBrief'],
+  rx_review: ['parsePrescriptions', 'checkInteractions', 'verifyDosage', 'flagContraindications'],
+  care_plan: ['assessConditions', 'setGoals', 'recommendInterventions', 'scheduleFollowups'],
 };
 
 const MODELS = ['claude-sonnet-4-20250514', 'claude-haiku-3-20250414', 'gpt-4o', 'gpt-4o-mini'];
@@ -39,19 +43,19 @@ function randomId(): string {
 }
 
 const PROMPT_VARIATIONS = [
-  (step: string) => `You are a ${step} specialist. Analyze the following content and provide structured output.\n\nContext: Process the input data according to standard ${step} guidelines.\nFormat: JSON\nMax tokens: 2048`,
-  (step: string) => `You are an expert ${step} agent. Your task is to carefully analyze the provided input and return a well-structured result.\n\nInstructions:\n1. Parse the input thoroughly\n2. Apply ${step} logic\n3. Return valid JSON with confidence scores\n\nBe concise and precise.`,
-  (step: string) => `System: You are a specialized ${step} processor.\nRole: Senior analyst\nObjective: Extract structured insights from the given content.\n\nRules:\n- Output must be valid JSON\n- Include metadata fields\n- Flag any anomalies detected during ${step}`,
-  (step: string) => `[${step.toUpperCase()}] Process the following input.\n\nYou must:\n- Analyze content for relevance\n- Score quality on a 0-100 scale\n- Provide reasoning for your assessment\n- Return structured JSON output\n\nTemperature: 0.3\nModel behavior: deterministic`,
-  (step: string) => `As a ${step} specialist, evaluate the following:\n\nPriority: accuracy over speed\nOutput schema: { "result": string, "confidence": number, "flags": string[] }\n\nProcess step: ${step}\nVersion: 2.1.0`,
+  (step: string) => `You are a clinical ${step} specialist. Process the following patient data according to HIPAA-compliant guidelines.\n\nContext: Apply ${step} logic to the structured health record.\nFormat: FHIR-compatible JSON\nMax tokens: 2048`,
+  (step: string) => `You are an expert medical ${step} agent. Carefully analyze the provided clinical input and return a structured result.\n\nInstructions:\n1. Parse patient data thoroughly\n2. Apply ${step} validation rules\n3. Return JSON with confidence scores and ICD-10 codes where applicable\n\nBe precise and cite clinical evidence.`,
+  (step: string) => `System: You are a specialized healthcare ${step} processor.\nRole: Clinical informatics analyst\nObjective: Extract structured medical insights from the given record.\n\nRules:\n- Output must be FHIR R4 compliant JSON\n- Include provenance metadata\n- Flag any clinical safety concerns during ${step}`,
+  (step: string) => `[${step.toUpperCase()}] Process the following clinical data.\n\nYou must:\n- Analyze for medical relevance and completeness\n- Validate against CMS guidelines\n- Score confidence on a 0-100 scale\n- Return structured JSON with audit trail\n\nTemperature: 0.2\nModel behavior: deterministic, safety-first`,
+  (step: string) => `As a ${step} specialist in healthcare AI, evaluate the following:\n\nPriority: patient safety over throughput\nOutput schema: { "result": object, "confidence": number, "flags": string[], "icdCodes": string[] }\n\nProcess step: ${step}\nCompliance: HIPAA, HL7 FHIR R4\nVersion: 3.2.1`,
 ];
 
 const RESPONSE_VARIATIONS = [
-  (step: string, confidence: number) => `{"result": "Analysis complete for ${step}", "confidence": ${confidence}, "flags": [], "processingTime": "${randomBetween(100, 900)}ms"}`,
-  (step: string, confidence: number) => `{\n  "result": "${step} evaluation passed",\n  "confidence": ${confidence},\n  "details": {\n    "itemsProcessed": ${randomBetween(3, 15)},\n    "warnings": ${randomBetween(0, 2)}\n  }\n}`,
-  (step: string, confidence: number) => `{"status": "success", "step": "${step}", "output": {"score": ${confidence}, "categories": [${randomBetween(2, 5)} items], "summary": "Processed successfully"}}`,
-  (step: string, confidence: number) => `{\n  "result": "Completed ${step}",\n  "confidence": ${confidence / 100},\n  "metadata": {\n    "model": "v2",\n    "tokens_used": ${randomBetween(200, 1500)},\n    "latency_ms": ${randomBetween(80, 600)}\n  },\n  "output": "Structured analysis complete"\n}`,
-  (step: string, confidence: number) => `{"step": "${step}", "status": "done", "confidence": ${confidence}, "findings": ["Primary analysis complete", "No anomalies detected", "${randomBetween(1, 8)} sub-items processed"]}`,
+  (step: string, confidence: number) => `{"result": {"status": "processed", "step": "${step}"}, "confidence": ${confidence}, "flags": [], "auditId": "aud_${randomBetween(10000, 99999)}"}`,
+  (step: string, confidence: number) => `{\n  "result": "${step} validation passed",\n  "confidence": ${confidence},\n  "details": {\n    "recordsProcessed": ${randomBetween(1, 8)},\n    "warnings": ${randomBetween(0, 2)},\n    "complianceCheck": "passed"\n  }\n}`,
+  (step: string, confidence: number) => `{"status": "complete", "step": "${step}", "output": {"score": ${confidence}, "icdCodes": ["Z00.00", "R69"], "summary": "Clinical data processed successfully"}}`,
+  (step: string, confidence: number) => `{\n  "result": "Completed ${step}",\n  "confidence": ${confidence / 100},\n  "metadata": {\n    "fhirVersion": "R4",\n    "tokens_used": ${randomBetween(200, 1500)},\n    "latency_ms": ${randomBetween(80, 600)},\n    "phi_detected": false\n  },\n  "output": "Structured clinical output ready"\n}`,
+  (step: string, confidence: number) => `{"step": "${step}", "status": "done", "confidence": ${confidence}, "findings": ["Primary analysis complete", "No safety flags", "${randomBetween(1, 5)} clinical items validated"], "nextAction": "route_to_provider"}`,
 ];
 
 function generateTrace(stepName: string, index: number, forceType?: Trace['type']): Trace {
@@ -124,10 +128,10 @@ function generateStep(name: string, workflowStart: Date, stepIndex: number, tota
     traces,
     evaluations: Math.random() > 0.6 ? [{
       id: `eval_${Math.random().toString(36).substring(2, 10)}`,
-      evaluatorName: `check_${name}_quality`,
+      evaluatorName: `check_${name}_compliance`,
       passed: Math.random() > 0.2,
       confidence: randomBetween(60, 99),
-      reasoning: `Output meets quality threshold with ${randomBetween(3, 8)} positive signals detected.`,
+      reasoning: `Clinical output meets compliance threshold with ${randomBetween(3, 8)} validation checks passed.`,
       score: randomBetween(60, 100) / 100,
     }] : undefined,
     retryCount: hasFailed ? randomBetween(1, 3) : 0,
@@ -168,8 +172,8 @@ export function generateExecutions(count: number = 200): WorkflowExecution[] {
       startedAt,
       completedAt: status === 'completed' || status === 'failed' ? new Date(startedAt.getTime() + totalDuration) : undefined,
       duration: totalDuration,
-      input: { topic: `Sample input for ${workflowName}` },
-      output: status === 'completed' ? { result: 'Success' } : undefined,
+      input: { patientId: `MRN-${randomBetween(100000, 999999)}`, encounter: `enc_${randomBetween(1000, 9999)}` },
+      output: status === 'completed' ? { result: 'Processed', recordId: `rec_${randomBetween(10000, 99999)}` } : undefined,
       steps,
       totalTokens,
       totalCost,
