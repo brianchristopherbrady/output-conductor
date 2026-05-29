@@ -1,5 +1,5 @@
 import { motion } from 'framer-motion';
-import { cn, getStatusDot } from '@/utils';
+import { getStatusBackground, getStatusBorder, getStatusColor, getStatusDot } from '@/utils';
 
 interface StatusBadgeProps {
   status: string;
@@ -8,28 +8,30 @@ interface StatusBadgeProps {
 }
 
 export function StatusBadge({ status, size = 'sm', pulse = false }: StatusBadgeProps) {
+  const borderColor = status === 'pending' ? 'var(--ds-border-secondary)' : getStatusBorder(status);
+
   return (
-    <span className={cn(
-      'inline-flex items-center gap-1.5 rounded-full border px-2 py-0.5 text-xs font-medium capitalize',
-      status === 'completed' && 'border-emerald-500/20 bg-emerald-500/10 text-emerald-400',
-      status === 'cached' && 'border-cyan-500/20 bg-cyan-500/10 text-cyan-400',
-      status === 'running' && 'border-indigo-500/20 bg-indigo-500/10 text-indigo-400',
-      status === 'failed' && 'border-red-500/20 bg-red-500/10 text-red-400',
-      status === 'error' && 'border-red-500/20 bg-red-500/10 text-red-400',
-      status === 'retrying' && 'border-amber-500/20 bg-amber-500/10 text-amber-400',
-      status === 'pending' && 'border-zinc-500/20 bg-zinc-500/10 text-zinc-400',
-      status === 'success' && 'border-emerald-500/20 bg-emerald-500/10 text-emerald-400',
-      size === 'md' && 'px-2.5 py-1 text-sm',
-    )}>
+    <span
+      className={`inline-flex items-center gap-1.5 rounded-full border px-2 py-0.5 text-xs font-medium capitalize ${size === 'md' ? 'px-2.5 py-1 text-sm' : ''}`}
+      style={{
+        color: getStatusColor(status),
+        borderColor,
+        backgroundColor: getStatusBackground(status),
+      }}
+    >
       <span className="relative flex h-1.5 w-1.5">
         {(pulse || status === 'running') && (
           <motion.span
-            className={cn('absolute inline-flex h-full w-full rounded-full opacity-75', getStatusDot(status))}
+            className="absolute inline-flex h-full w-full rounded-full opacity-75"
+            style={{ backgroundColor: getStatusDot(status) }}
             animate={{ scale: [1, 1.8, 1], opacity: [0.75, 0, 0.75] }}
             transition={{ duration: 1.5, repeat: Infinity }}
           />
         )}
-        <span className={cn('relative inline-flex h-1.5 w-1.5 rounded-full', getStatusDot(status))} />
+        <span
+          className="relative inline-flex h-1.5 w-1.5 rounded-full"
+          style={{ backgroundColor: getStatusDot(status) }}
+        />
       </span>
       {status}
     </span>
@@ -45,32 +47,44 @@ interface MetricCardProps {
 }
 
 export function MetricCard({ label, value, subvalue, icon, trend }: MetricCardProps) {
+  const trendColor =
+    trend === 'up'
+      ? 'var(--ds-status-success)'
+      : trend === 'down'
+        ? 'var(--ds-status-error)'
+        : 'var(--ds-text-muted)';
+
   return (
     <motion.div
       initial={{ opacity: 0, y: 8 }}
       animate={{ opacity: 1, y: 0 }}
-      className="relative overflow-hidden rounded-xl border border-zinc-800 bg-zinc-900/50 p-4 backdrop-blur-sm"
+      className="relative overflow-hidden rounded-xl border p-4 backdrop-blur-sm"
+      style={{
+        borderColor: 'var(--ds-border-primary)',
+        backgroundColor: 'var(--ds-bg-secondary)',
+      }}
     >
       <div className="flex items-start justify-between">
         <div className="space-y-1">
-          <p className="text-xs font-medium text-zinc-500 uppercase tracking-wider">{label}</p>
-          <p className="text-2xl font-semibold tracking-tight text-zinc-100">{value}</p>
+          <p className="text-xs font-medium uppercase tracking-wider text-[var(--ds-text-muted)]">{label}</p>
+          <p className="text-2xl font-semibold tracking-tight text-[var(--ds-text-primary)]">{value}</p>
           {subvalue && (
-            <p className={cn(
-              'text-xs font-medium',
-              trend === 'up' && 'text-emerald-400',
-              trend === 'down' && 'text-red-400',
-              trend === 'neutral' && 'text-zinc-500',
-            )}>
+            <p className="text-xs font-medium" style={{ color: trendColor }}>
               {subvalue}
             </p>
           )}
         </div>
-        <div className="rounded-lg bg-zinc-800/50 p-2 text-zinc-400">
+        <div
+          className="rounded-lg p-2 text-[var(--ds-text-secondary)]"
+          style={{ backgroundColor: 'var(--ds-bg-tertiary)' }}
+        >
           {icon}
         </div>
       </div>
-      <div className="absolute inset-0 -z-10 bg-gradient-to-br from-zinc-800/20 to-transparent" />
+      <div
+        className="absolute inset-0 -z-10"
+        style={{ background: 'linear-gradient(135deg, var(--ds-bg-tertiary), transparent 70%)' }}
+      />
     </motion.div>
   );
 }

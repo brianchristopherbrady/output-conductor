@@ -70,7 +70,7 @@ export function App() {
   const handleCommandAction = useCallback((action: CommandAction) => {
     setCommandPaletteOpen(false);
     if (action.type === 'navigate') {
-      setViewMode(action.value as ViewMode);
+      setViewMode(action.value);
     } else if (action.type === 'filter') {
       setWorkflowFilter(action.value);
       setViewMode('dashboard');

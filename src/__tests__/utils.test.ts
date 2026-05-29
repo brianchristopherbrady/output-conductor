@@ -56,19 +56,19 @@ describe('formatTokens', () => {
 
 describe('getStatusColor', () => {
   it('returns correct color for completed', () => {
-    expect(getStatusColor('completed')).toBe('text-emerald-400');
+    expect(getStatusColor('completed')).toBe('var(--ds-status-success)');
   });
 
   it('returns correct color for failed', () => {
-    expect(getStatusColor('failed')).toBe('text-red-400');
+    expect(getStatusColor('failed')).toBe('var(--ds-status-error)');
   });
 
   it('returns correct color for running', () => {
-    expect(getStatusColor('running')).toBe('text-indigo-400');
+    expect(getStatusColor('running')).toBe('var(--ds-status-running)');
   });
 
   it('returns default for unknown status', () => {
-    expect(getStatusColor('unknown')).toBe('text-zinc-400');
+    expect(getStatusColor('unknown')).toBe('var(--ds-text-secondary)');
   });
 });
 

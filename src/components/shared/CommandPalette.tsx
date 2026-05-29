@@ -13,11 +13,19 @@ import {
   Search,
   Settings2,
   Workflow,
+  BookOpen,
+  GitCompare,
 } from 'lucide-react';
 import { generateExecutions } from '@/data/mock-data';
+import type { ViewMode } from '@/types';
 import { cn } from '@/utils';
 
-export type CommandAction = { type: 'navigate' | 'filter' | 'action'; value: string };
+type CommandPaletteAction = 'toggle-theme' | 'toggle-live' | 'settings';
+
+export type CommandAction =
+  | { type: 'navigate'; value: ViewMode }
+  | { type: 'filter'; value: string }
+  | { type: 'action'; value: CommandPaletteAction };
 
 interface CommandPaletteProps {
   open: boolean;
@@ -41,22 +49,22 @@ interface CommandItem {
 const VIEW_ITEMS: CommandItem[] = [
   {
     id: 'view-dashboard',
-    label: 'Dashboard',
+    label: 'Executions',
     subtitle: 'Overview of workflow executions',
     category: 'Views',
     action: { type: 'navigate', value: 'dashboard' },
-    hint: 'G D',
-    keywords: ['dashboard', 'executions', 'overview', 'home'],
+    hint: '1',
+    keywords: ['executions', 'dashboard', 'overview', 'home'],
     icon: LayoutDashboard,
   },
   {
     id: 'view-flow',
-    label: 'Flow',
-    subtitle: 'Inspect workflow graph and paths',
+    label: 'States',
+    subtitle: 'Inspect workflow states and paths',
     category: 'Views',
     action: { type: 'navigate', value: 'flow' },
-    hint: 'G F',
-    keywords: ['flow', 'graph', 'dag', 'workflow'],
+    hint: '2',
+    keywords: ['states', 'flow', 'graph', 'dag', 'workflow'],
     icon: Route,
   },
   {
@@ -65,7 +73,7 @@ const VIEW_ITEMS: CommandItem[] = [
     subtitle: 'Trace execution chronology',
     category: 'Views',
     action: { type: 'navigate', value: 'timeline' },
-    hint: 'G T',
+    hint: '3',
     keywords: ['timeline', 'history', 'time'],
     icon: GitBranch,
   },
@@ -75,9 +83,19 @@ const VIEW_ITEMS: CommandItem[] = [
     subtitle: 'Review step-level traces',
     category: 'Views',
     action: { type: 'navigate', value: 'traces' },
-    hint: 'G R',
+    hint: '4',
     keywords: ['traces', 'trace', 'spans', 'steps'],
     icon: Activity,
+  },
+  {
+    id: 'view-diff',
+    label: 'Diff',
+    subtitle: 'Compare prompt and output changes',
+    category: 'Views',
+    action: { type: 'navigate', value: 'diff' },
+    hint: '5',
+    keywords: ['diff', 'compare', 'changes', 'prompt'],
+    icon: GitCompare,
   },
   {
     id: 'view-insights',
@@ -88,6 +106,16 @@ const VIEW_ITEMS: CommandItem[] = [
     hint: '6',
     keywords: ['analytics', 'charts', 'metrics', 'reports', 'evals', 'insights'],
     icon: BarChart3,
+  },
+  {
+    id: 'view-showcase',
+    label: 'About',
+    subtitle: 'Explore the product showcase and overview',
+    category: 'Views',
+    action: { type: 'navigate', value: 'showcase' },
+    hint: '7',
+    keywords: ['about', 'showcase', 'overview', 'product'],
+    icon: BookOpen,
   },
 ];
 
@@ -107,7 +135,7 @@ const ACTION_ITEMS: CommandItem[] = [
     label: 'Toggle live mode',
     subtitle: 'Enable or pause live workflow updates',
     category: 'Actions',
-    action: { type: 'action', value: 'toggle-live-mode' },
+    action: { type: 'action', value: 'toggle-live' },
     hint: 'L',
     keywords: ['live', 'stream', 'realtime', 'auto refresh'],
     icon: Radio,
@@ -117,7 +145,7 @@ const ACTION_ITEMS: CommandItem[] = [
     label: 'Open settings',
     subtitle: 'Adjust application preferences',
     category: 'Actions',
-    action: { type: 'action', value: 'open-settings' },
+    action: { type: 'action', value: 'settings' },
     hint: 'S',
     keywords: ['settings', 'preferences', 'config'],
     icon: Settings2,

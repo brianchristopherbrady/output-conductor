@@ -27,55 +27,58 @@ export function getStatusColor(status: string): string {
   switch (status) {
     case 'completed':
     case 'success':
+      return 'var(--ds-status-success)';
     case 'cached':
-      return 'text-emerald-400';
+      return 'var(--ds-status-cached)';
     case 'running':
     case 'pending':
-      return 'text-indigo-400';
+      return 'var(--ds-status-running)';
     case 'failed':
     case 'error':
-      return 'text-red-400';
+      return 'var(--ds-status-error)';
     case 'retrying':
-      return 'text-amber-400';
+      return 'var(--ds-status-warning)';
     default:
-      return 'text-zinc-400';
+      return 'var(--ds-text-secondary)';
+  }
+}
+
+export function getStatusBackground(status: string): string {
+  switch (status) {
+    case 'completed':
+    case 'success':
+      return 'var(--ds-status-success-bg)';
+    case 'failed':
+    case 'error':
+      return 'var(--ds-status-error-bg)';
+    default:
+      return 'var(--ds-bg-tertiary)';
+  }
+}
+
+export function getStatusBorder(status: string): string {
+  switch (status) {
+    case 'completed':
+    case 'success':
+      return 'var(--ds-status-success)';
+    case 'cached':
+      return 'var(--ds-status-cached)';
+    case 'running':
+      return 'var(--ds-status-running)';
+    case 'failed':
+    case 'error':
+      return 'var(--ds-status-error)';
+    case 'retrying':
+      return 'var(--ds-status-warning)';
+    default:
+      return 'var(--ds-border-secondary)';
   }
 }
 
 export function getStatusBg(status: string): string {
-  switch (status) {
-    case 'completed':
-    case 'success':
-    case 'cached':
-      return 'bg-emerald-400/10 border-emerald-400/20';
-    case 'running':
-    case 'pending':
-      return 'bg-indigo-400/10 border-indigo-400/20';
-    case 'failed':
-    case 'error':
-      return 'bg-red-400/10 border-red-400/20';
-    case 'retrying':
-      return 'bg-amber-400/10 border-amber-400/20';
-    default:
-      return 'bg-zinc-400/10 border-zinc-400/20';
-  }
+  return getStatusBackground(status);
 }
 
 export function getStatusDot(status: string): string {
-  switch (status) {
-    case 'completed':
-    case 'success':
-    case 'cached':
-      return 'bg-emerald-400';
-    case 'running':
-    case 'pending':
-      return 'bg-indigo-400';
-    case 'failed':
-    case 'error':
-      return 'bg-red-400';
-    case 'retrying':
-      return 'bg-amber-400';
-    default:
-      return 'bg-zinc-400';
-  }
+  return getStatusColor(status);
 }

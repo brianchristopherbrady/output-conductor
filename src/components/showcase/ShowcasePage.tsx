@@ -57,7 +57,7 @@ const FEATURES = [
   {
     icon: <Keyboard className="h-5 w-5" />,
     title: 'Keyboard Shortcuts',
-    description: 'Full keyboard navigation: j/k to traverse, 1-5 to switch views, L for live mode, S for settings, ? for help overlay. Input-aware (disabled when typing).',
+    description: 'Full keyboard navigation: j/k to traverse, 1-7 to switch views, L for live mode, S for settings, ? for help overlay. Input-aware (disabled when typing).',
     tags: ['Power Users', 'Accessibility', 'Global Listeners'],
   },
   {
