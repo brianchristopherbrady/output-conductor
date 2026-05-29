@@ -194,37 +194,40 @@ export function App() {
                     initial={{ opacity: 0, y: 4, scale: 0.95 }}
                     animate={{ opacity: 1, y: 0, scale: 1 }}
                     exit={{ opacity: 0, y: 4, scale: 0.95 }}
-                    className="absolute right-0 top-full mt-2 z-50 w-64 rounded-2xl border border-zinc-700 bg-zinc-900 p-4 shadow-2xl"
+                   className="absolute right-0 top-full mt-2 z-50 w-64 rounded-2xl border p-4 shadow-2xl"
+                   style={{ borderColor: 'var(--ds-border-primary)', backgroundColor: 'var(--ds-bg-secondary)' }}
                   >
-                    <div className="space-y-4">
-                      <div>
-                        <label className="text-xs uppercase tracking-wider text-zinc-500 mb-1.5 block font-medium">Status</label>
-                        <select
-                          value={statusFilter}
-                          onChange={(e) => setStatusFilter(e.target.value)}
-                          className="w-full rounded-lg border border-zinc-700 bg-zinc-800 px-3 py-2 text-sm text-zinc-200 focus:outline-none focus:border-conductor-500/50"
-                        >
-                          <option value="all">All Statuses</option>
-                          <option value="completed">Completed</option>
-                          <option value="running">Running</option>
-                          <option value="failed">Failed</option>
-                          <option value="retrying">Retrying</option>
-                        </select>
-                      </div>
-                      <div>
-                        <label className="text-xs uppercase tracking-wider text-zinc-500 mb-1.5 block font-medium">Workflow</label>
-                        <select
-                          value={workflowFilter}
-                          onChange={(e) => setWorkflowFilter(e.target.value)}
-                          className="w-full rounded-lg border border-zinc-700 bg-zinc-800 px-3 py-2 text-sm text-zinc-200 focus:outline-none focus:border-conductor-500/50"
-                        >
-                          <option value="all">All Workflows</option>
-                          {workflowNames.map(name => (
-                            <option key={name} value={name}>{name}</option>
-                          ))}
-                        </select>
-                      </div>
-                    </div>
+                   <div className="space-y-4">
+                     <div>
+                       <label className="text-xs uppercase tracking-wider mb-1.5 block font-medium" style={{ color: 'var(--ds-text-muted)' }}>Status</label>
+                       <select
+                         value={statusFilter}
+                         onChange={(e) => setStatusFilter(e.target.value)}
+                         className="w-full rounded-lg border px-3 py-2 text-sm focus:outline-none"
+                         style={{ borderColor: 'var(--ds-border-primary)', backgroundColor: 'var(--ds-bg-tertiary)', color: 'var(--ds-text-primary)' }}
+                       >
+                         <option value="all">All Statuses</option>
+                         <option value="completed">Completed</option>
+                         <option value="running">Running</option>
+                         <option value="failed">Failed</option>
+                         <option value="retrying">Retrying</option>
+                       </select>
+                     </div>
+                     <div>
+                       <label className="text-xs uppercase tracking-wider mb-1.5 block font-medium" style={{ color: 'var(--ds-text-muted)' }}>Workflow</label>
+                       <select
+                         value={workflowFilter}
+                         onChange={(e) => setWorkflowFilter(e.target.value)}
+                         className="w-full rounded-lg border px-3 py-2 text-sm focus:outline-none"
+                         style={{ borderColor: 'var(--ds-border-primary)', backgroundColor: 'var(--ds-bg-tertiary)', color: 'var(--ds-text-primary)' }}
+                       >
+                         <option value="all">All Workflows</option>
+                         {workflowNames.map(name => (
+                           <option key={name} value={name}>{name}</option>
+                         ))}
+                       </select>
+                     </div>
+                   </div>
                   </motion.div>
                 )}
               </AnimatePresence>

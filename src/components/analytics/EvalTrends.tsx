@@ -191,6 +191,7 @@ export function EvalTrends({ executions }: EvalTrendsProps) {
   }, [executions]);
 
   const [visibleEvaluators, setVisibleEvaluators] = useState<Set<string> | null>(null);
+  const [filterOpen, setFilterOpen] = useState(false);
 
   const activeEvaluators = visibleEvaluators ?? new Set(evaluatorNames);
 
@@ -207,9 +208,17 @@ export function EvalTrends({ executions }: EvalTrendsProps) {
     });
   }
 
+  function selectAll() {
+    setVisibleEvaluators(null);
+  }
+
+  function selectNone() {
+    setVisibleEvaluators(new Set());
+  }
+
   return (
     <section className="space-y-6 p-4 md:p-6">
-      {/* Regression alerts as top banner */}
+      {/* Regression alerts as table */}
       <div
         className="rounded-2xl border p-5"
         style={{
@@ -220,62 +229,161 @@ export function EvalTrends({ executions }: EvalTrendsProps) {
         <div className="mb-4 flex items-center justify-between">
           <div className="flex items-center gap-3">
             <h2 className="text-lg font-semibold tracking-tight" style={{ color: 'var(--ds-text-primary)' }}>
-              Evaluation Trends
+              Regression Alerts
             </h2>
             {alerts.length > 0 && (
               <span
                 className="rounded-full px-2.5 py-0.5 text-[11px] font-semibold"
                 style={{ backgroundColor: 'var(--ds-status-error-bg)', color: 'var(--ds-status-error)' }}
               >
-                {alerts.length} regression{alerts.length > 1 ? 's' : ''} detected
+                {alerts.length} detected
               </span>
             )}
           </div>
           <p className="text-xs" style={{ color: 'var(--ds-text-muted)' }}>vs. previous 7 days</p>
         </div>
 
-        <div className="flex gap-3 overflow-x-auto pb-1">
-          {alerts.length > 0 ? alerts.map((alert) => {
-            const isCritical = alert.severity === 'error';
-            return (
-              <article
-                key={alert.evaluatorName}
-                className="min-w-[220px] flex-1 rounded-xl border p-3"
-                style={{
-                  borderColor: isCritical ? 'var(--ds-status-error-muted)' : 'var(--ds-status-warning-muted)',
-                  backgroundColor: isCritical ? 'var(--ds-status-error-bg)' : 'var(--ds-status-warning-bg)',
-                }}
-              >
-                <div className="flex items-start justify-between gap-2">
-                  <div className="min-w-0 flex-1">
-                    <p className="truncate text-sm font-semibold" style={{ color: isCritical ? 'var(--ds-status-error)' : 'var(--ds-status-warning)' }}>
-                      {alert.evaluatorName}
-                    </p>
-                    <p className="mt-0.5 text-[11px]" style={{ color: 'var(--ds-text-secondary)' }}>
-                      {percent(alert.oldRate)} → {percent(alert.newRate)}
-                    </p>
-                  </div>
-                  <span
-                    className="shrink-0 text-sm font-bold"
-                    style={{ color: isCritical ? 'var(--ds-status-error)' : 'var(--ds-status-warning)' }}
-                  >
-                    {percent(alert.delta)}
-                  </span>
-                </div>
-              </article>
-            );
-          }) : (
-            <p className="text-sm" style={{ color: 'var(--ds-text-muted)' }}>
-              ✓ No evaluator regressions greater than 10% in the current window.
-            </p>
-          )}
-        </div>
+        {alerts.length > 0 ? (
+          <div className="overflow-hidden rounded-xl border" style={{ borderColor: 'var(--ds-border-secondary)' }}>
+            <table className="w-full text-sm">
+              <thead>
+                <tr style={{ backgroundColor: 'var(--ds-bg-tertiary)' }}>
+                  <th className="px-4 py-2.5 text-left text-xs font-medium uppercase tracking-wider" style={{ color: 'var(--ds-text-muted)' }}>Evaluator</th>
+                  <th className="px-4 py-2.5 text-right text-xs font-medium uppercase tracking-wider" style={{ color: 'var(--ds-text-muted)' }}>Previous</th>
+                  <th className="px-4 py-2.5 text-right text-xs font-medium uppercase tracking-wider" style={{ color: 'var(--ds-text-muted)' }}>Current</th>
+                  <th className="px-4 py-2.5 text-right text-xs font-medium uppercase tracking-wider" style={{ color: 'var(--ds-text-muted)' }}>Delta</th>
+                  <th className="px-4 py-2.5 text-center text-xs font-medium uppercase tracking-wider" style={{ color: 'var(--ds-text-muted)' }}>Severity</th>
+                </tr>
+              </thead>
+              <tbody>
+                {alerts.map((alert) => {
+                  const isCritical = alert.severity === 'error';
+                  return (
+                    <tr
+                      key={alert.evaluatorName}
+                      className="border-t"
+                      style={{ borderColor: 'var(--ds-border-secondary)' }}
+                    >
+                      <td className="px-4 py-3 font-medium" style={{ color: 'var(--ds-text-primary)' }}>{alert.evaluatorName}</td>
+                      <td className="px-4 py-3 text-right tabular-nums" style={{ color: 'var(--ds-text-secondary)' }}>{percent(alert.oldRate)}</td>
+                      <td className="px-4 py-3 text-right tabular-nums" style={{ color: 'var(--ds-text-secondary)' }}>{percent(alert.newRate)}</td>
+                      <td className="px-4 py-3 text-right tabular-nums font-semibold" style={{ color: isCritical ? 'var(--ds-status-error)' : 'var(--ds-status-warning)' }}>
+                        {alert.delta > 0 ? '+' : ''}{percent(alert.delta)}
+                      </td>
+                      <td className="px-4 py-3 text-center">
+                        <span
+                          className="inline-block rounded-full px-2 py-0.5 text-[11px] font-semibold"
+                          style={{
+                            backgroundColor: isCritical ? 'var(--ds-status-error-bg)' : 'var(--ds-status-warning-bg)',
+                            color: isCritical ? 'var(--ds-status-error)' : 'var(--ds-status-warning)',
+                          }}
+                        >
+                          {alert.severity}
+                        </span>
+                      </td>
+                    </tr>
+                  );
+                })}
+              </tbody>
+            </table>
+          </div>
+        ) : (
+          <p className="text-sm" style={{ color: 'var(--ds-text-muted)' }}>
+            ✓ No evaluator regressions greater than 10% in the current window.
+          </p>
+        )}
       </div>
 
+      {/* Confidence Distribution */}
       <div className="rounded-2xl border p-4" style={cardStyle}>
         <div className="mb-4">
-          <h3 className="text-sm font-medium" style={{ color: 'var(--ds-text-primary)' }}>Pass Rate Over Time</h3>
-          <p className="text-xs" style={{ color: 'var(--ds-text-muted)' }}>Grouped by day across all step evaluations.</p>
+          <h3 className="text-sm font-medium" style={{ color: 'var(--ds-text-primary)' }}>Confidence Distribution</h3>
+          <p className="text-xs" style={{ color: 'var(--ds-text-muted)' }}>Histogram of confidence buckets split by pass and fail outcomes.</p>
+        </div>
+
+        <ResponsiveContainer width="100%" height={240}>
+          <BarChart data={confidenceData} margin={{ top: 8, right: 12, left: 0, bottom: 0 }}>
+            <XAxis
+              dataKey="bucket"
+              tick={{ fill: 'var(--ds-text-muted)', fontSize: 11 }}
+              axisLine={false}
+              tickLine={false}
+            />
+            <YAxis
+              allowDecimals={false}
+              tick={{ fill: 'var(--ds-text-muted)', fontSize: 11 }}
+              axisLine={false}
+              tickLine={false}
+              width={28}
+            />
+            <Tooltip
+              contentStyle={tooltipStyle}
+              labelStyle={{ color: 'var(--ds-text-secondary)' }}
+              labelFormatter={(label) => `Confidence ${label}`}
+            />
+            <Bar dataKey="passed" name="passed" fill="var(--ds-status-success)" radius={[6, 6, 0, 0]} />
+            <Bar dataKey="failed" name="failed" fill="var(--ds-status-error)" radius={[6, 6, 0, 0]} />
+          </BarChart>
+        </ResponsiveContainer>
+      </div>
+
+      {/* Pass Rate Over Time — at bottom */}
+      <div className="rounded-2xl border p-4" style={cardStyle}>
+        <div className="mb-4 flex items-center justify-between">
+          <div>
+            <h3 className="text-sm font-medium" style={{ color: 'var(--ds-text-primary)' }}>Pass Rate Over Time</h3>
+            <p className="text-xs" style={{ color: 'var(--ds-text-muted)' }}>Grouped by day across all step evaluations.</p>
+          </div>
+
+          {/* Filter dropdown */}
+          <div className="relative">
+            <button
+              onClick={() => setFilterOpen(!filterOpen)}
+              className="inline-flex items-center gap-1.5 rounded-lg border px-3 py-1.5 text-xs font-medium transition-colors"
+              style={{ borderColor: 'var(--ds-border-primary)', color: 'var(--ds-text-secondary)', backgroundColor: 'var(--ds-bg-tertiary)' }}
+            >
+              {activeEvaluators.size === evaluatorNames.length
+                ? 'All evaluators'
+                : `${activeEvaluators.size} of ${evaluatorNames.length}`}
+              <svg className={`h-3 w-3 transition-transform ${filterOpen ? 'rotate-180' : ''}`} viewBox="0 0 12 12" fill="none" stroke="currentColor" strokeWidth="2">
+                <path d="M3 5l3 3 3-3" />
+              </svg>
+            </button>
+
+            {filterOpen && (
+              <div
+                className="absolute right-0 top-full mt-1 z-50 w-56 rounded-xl border p-2 shadow-xl"
+                style={{ borderColor: 'var(--ds-border-primary)', backgroundColor: 'var(--ds-bg-secondary)' }}
+              >
+                <div className="mb-2 flex gap-2 border-b pb-2" style={{ borderColor: 'var(--ds-border-secondary)' }}>
+                  <button onClick={selectAll} className="text-[11px] font-medium" style={{ color: 'var(--ds-text-link)' }}>All</button>
+                  <button onClick={selectNone} className="text-[11px] font-medium" style={{ color: 'var(--ds-text-link)' }}>None</button>
+                </div>
+                <div className="space-y-0.5 max-h-48 overflow-y-auto">
+                  {evaluatorNames.map((name, index) => {
+                    const isActive = activeEvaluators.has(name);
+                    return (
+                      <button
+                        key={name}
+                        onClick={() => toggleEvaluator(name)}
+                        className="flex w-full items-center gap-2 rounded-lg px-2 py-1.5 text-xs transition-colors hover:opacity-80"
+                        style={{ backgroundColor: isActive ? 'var(--ds-bg-tertiary)' : 'transparent', color: 'var(--ds-text-primary)' }}
+                      >
+                        <span
+                          className="h-2.5 w-2.5 rounded-sm border"
+                          style={{
+                            borderColor: EVALUATOR_COLORS[index % EVALUATOR_COLORS.length],
+                            backgroundColor: isActive ? EVALUATOR_COLORS[index % EVALUATOR_COLORS.length] : 'transparent',
+                          }}
+                        />
+                        {name}
+                      </button>
+                    );
+                  })}
+                </div>
+              </div>
+            )}
+          </div>
         </div>
 
         {passRateData.length > 0 ? (
@@ -321,63 +429,6 @@ export function EvalTrends({ executions }: EvalTrendsProps) {
             No evaluation data available yet.
           </div>
         )}
-
-        <div className="mt-4 flex flex-wrap gap-2 text-xs">
-          {evaluatorNames.map((name, index) => {
-            const isActive = activeEvaluators.has(name);
-            return (
-              <button
-                key={name}
-                onClick={() => toggleEvaluator(name)}
-                className="inline-flex items-center gap-2 rounded-full border px-2.5 py-1 transition-all"
-                style={{
-                  borderColor: isActive ? EVALUATOR_COLORS[index % EVALUATOR_COLORS.length] : 'var(--ds-border-secondary)',
-                  backgroundColor: isActive ? `${EVALUATOR_COLORS[index % EVALUATOR_COLORS.length]}15` : 'var(--ds-bg-secondary)',
-                  color: isActive ? 'var(--ds-text-primary)' : 'var(--ds-text-muted)',
-                  opacity: isActive ? 1 : 0.5,
-                }}
-              >
-                <span
-                  className="h-2 w-2 rounded-full"
-                  style={{ backgroundColor: EVALUATOR_COLORS[index % EVALUATOR_COLORS.length] }}
-                />
-                {name}
-              </button>
-            );
-          })}
-        </div>
-      </div>
-
-      <div className="rounded-2xl border p-4" style={cardStyle}>
-        <div className="mb-4">
-          <h3 className="text-sm font-medium" style={{ color: 'var(--ds-text-primary)' }}>Confidence Distribution</h3>
-          <p className="text-xs" style={{ color: 'var(--ds-text-muted)' }}>Histogram of confidence buckets split by pass and fail outcomes.</p>
-        </div>
-
-        <ResponsiveContainer width="100%" height={280}>
-          <BarChart data={confidenceData} margin={{ top: 8, right: 12, left: 0, bottom: 0 }}>
-            <XAxis
-              dataKey="bucket"
-              tick={{ fill: 'var(--ds-text-muted)', fontSize: 11 }}
-              axisLine={false}
-              tickLine={false}
-            />
-            <YAxis
-              allowDecimals={false}
-              tick={{ fill: 'var(--ds-text-muted)', fontSize: 11 }}
-              axisLine={false}
-              tickLine={false}
-              width={28}
-            />
-            <Tooltip
-              contentStyle={tooltipStyle}
-              labelStyle={{ color: 'var(--ds-text-secondary)' }}
-              labelFormatter={(label) => `Confidence ${label}`}
-            />
-            <Bar dataKey="passed" name="passed" fill="var(--ds-status-success)" radius={[6, 6, 0, 0]} />
-            <Bar dataKey="failed" name="failed" fill="var(--ds-status-error)" radius={[6, 6, 0, 0]} />
-          </BarChart>
-        </ResponsiveContainer>
       </div>
     </section>
   );
