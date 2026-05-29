@@ -238,9 +238,9 @@ export function FlowGraph({ executions, selectedExecution, onSelectExecution }: 
 
       {/* Scrollable content: graph on top, table below */}
       <div className="flex-1 overflow-auto">
-        <div className="flex">
+        <div className="flex overflow-hidden">
           {/* Flow diagram */}
-          <div className="flex-1 p-5">
+          <div className="min-w-0 flex-1 overflow-x-auto p-5">
             <svg width={svgW} height={svgH} className="select-none mx-auto block">
               <defs>
                 <filter id="flowGlow" x="-50%" y="-50%" width="200%" height="200%">
