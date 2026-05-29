@@ -192,19 +192,29 @@ export function EvalTrends({ executions }: EvalTrendsProps) {
 
   return (
     <section className="space-y-6 p-4 md:p-6">
-      <header className="space-y-1">
-        <h2 className="text-lg font-semibold tracking-tight" style={{ color: 'var(--ds-text-primary)' }}>
-          Evaluation Trends
-        </h2>
-        <p className="text-sm" style={{ color: 'var(--ds-text-tertiary)' }}>
-          Daily evaluator performance, confidence patterns, and quality regressions.
-        </p>
-      </header>
-
-      <div className="space-y-3">
-        <div>
-          <h3 className="text-sm font-medium" style={{ color: 'var(--ds-text-primary)' }}>Quality Regression Alerts</h3>
-          <p className="text-xs" style={{ color: 'var(--ds-text-muted)' }}>Comparing the last 7 days with the previous 7 day period.</p>
+      {/* Regression alerts as top banner */}
+      <div
+        className="rounded-2xl border p-5"
+        style={{
+          borderColor: alerts.length > 0 ? 'var(--ds-status-error-muted)' : 'var(--ds-border-secondary)',
+          backgroundColor: 'var(--ds-bg-secondary)',
+        }}
+      >
+        <div className="mb-4 flex items-center justify-between">
+          <div className="flex items-center gap-3">
+            <h2 className="text-lg font-semibold tracking-tight" style={{ color: 'var(--ds-text-primary)' }}>
+              Evaluation Trends
+            </h2>
+            {alerts.length > 0 && (
+              <span
+                className="rounded-full px-2.5 py-0.5 text-[11px] font-semibold"
+                style={{ backgroundColor: 'var(--ds-status-error-bg)', color: 'var(--ds-status-error)' }}
+              >
+                {alerts.length} regression{alerts.length > 1 ? 's' : ''} detected
+              </span>
+            )}
+          </div>
+          <p className="text-xs" style={{ color: 'var(--ds-text-muted)' }}>vs. previous 7 days</p>
         </div>
 
         <div className="flex gap-3 overflow-x-auto pb-1">
@@ -213,7 +223,7 @@ export function EvalTrends({ executions }: EvalTrendsProps) {
             return (
               <article
                 key={alert.evaluatorName}
-                className="min-w-[240px] flex-1 rounded-2xl border p-4"
+                className="min-w-[220px] flex-1 rounded-xl border p-3"
                 style={{
                   borderColor: isCritical ? 'var(--ds-status-error-muted)' : 'var(--ds-status-warning-muted)',
                   backgroundColor: isCritical ? 'var(--ds-status-error-bg)' : 'var(--ds-status-warning-bg)',
@@ -224,43 +234,23 @@ export function EvalTrends({ executions }: EvalTrendsProps) {
                     <p className="truncate text-sm font-semibold" style={{ color: isCritical ? 'var(--ds-status-error)' : 'var(--ds-status-warning)' }}>
                       {alert.evaluatorName}
                     </p>
-                    <p className="mt-1 text-xs" style={{ color: 'var(--ds-text-secondary)' }}>
-                      Pass rate dropped by {percent(Math.abs(alert.delta))}
+                    <p className="mt-0.5 text-[11px]" style={{ color: 'var(--ds-text-secondary)' }}>
+                      {percent(alert.oldRate)} → {percent(alert.newRate)}
                     </p>
                   </div>
                   <span
-                    className="shrink-0 rounded-full border px-2 py-0.5 text-[10px] font-medium uppercase tracking-wide"
-                    style={{
-                      borderColor: isCritical ? 'var(--ds-status-error-muted)' : 'var(--ds-status-warning-muted)',
-                      color: isCritical ? 'var(--ds-status-error)' : 'var(--ds-status-warning)',
-                    }}
+                    className="shrink-0 text-sm font-bold"
+                    style={{ color: isCritical ? 'var(--ds-status-error)' : 'var(--ds-status-warning)' }}
                   >
-                    {isCritical ? 'Critical' : 'Warning'}
+                    {percent(alert.delta)}
                   </span>
                 </div>
-
-                <dl className="mt-4 grid grid-cols-3 gap-3 text-sm">
-                  <div>
-                    <dt style={{ color: 'var(--ds-text-muted)' }}>Previous</dt>
-                    <dd className="mt-1 font-medium" style={{ color: 'var(--ds-text-primary)' }}>{percent(alert.oldRate)}</dd>
-                  </div>
-                  <div>
-                    <dt style={{ color: 'var(--ds-text-muted)' }}>Current</dt>
-                    <dd className="mt-1 font-medium" style={{ color: 'var(--ds-text-primary)' }}>{percent(alert.newRate)}</dd>
-                  </div>
-                  <div>
-                    <dt style={{ color: 'var(--ds-text-muted)' }}>Delta</dt>
-                    <dd className="mt-1 font-medium" style={{ color: isCritical ? 'var(--ds-status-error)' : 'var(--ds-status-warning)' }}>
-                      {percent(alert.delta)}
-                    </dd>
-                  </div>
-                </dl>
               </article>
             );
           }) : (
-            <div className="w-full rounded-2xl border border-dashed px-4 py-5 text-sm" style={{ borderColor: 'var(--ds-border-secondary)', color: 'var(--ds-text-muted)', backgroundColor: 'var(--ds-bg-secondary)' }}>
-              No evaluator regressions greater than 10% detected in the last comparison window.
-            </div>
+            <p className="text-sm" style={{ color: 'var(--ds-text-muted)' }}>
+              ✓ No evaluator regressions greater than 10% in the current window.
+            </p>
           )}
         </div>
       </div>
