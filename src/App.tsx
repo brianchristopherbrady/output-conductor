@@ -388,7 +388,7 @@ export function App() {
               initial={{ opacity: 0 }}
               animate={{ opacity: 1 }}
               exit={{ opacity: 0 }}
-              className="flex-1 overflow-hidden"
+              className="flex-1 overflow-auto"
             >
               <TimelineView executions={executions} onSelect={selectExecution} />
             </motion.div>
@@ -400,7 +400,7 @@ export function App() {
               initial={{ opacity: 0 }}
               animate={{ opacity: 1 }}
               exit={{ opacity: 0 }}
-              className="flex-1 overflow-hidden"
+              className="flex-1 overflow-auto"
             >
               <TracesView executions={executions} />
             </motion.div>
@@ -412,7 +412,7 @@ export function App() {
               initial={{ opacity: 0 }}
               animate={{ opacity: 1 }}
               exit={{ opacity: 0 }}
-              className="flex-1 overflow-hidden"
+              className="flex-1 overflow-auto"
             >
               <AnalyticsPanel executions={allExecutions} costData={costData} stats={stats} />
             </motion.div>
