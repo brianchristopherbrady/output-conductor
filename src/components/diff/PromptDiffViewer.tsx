@@ -426,19 +426,27 @@ export function PromptDiffViewer({ executions }: PromptDiffViewerProps) {
   const noLlmTraces = selectedStepName.length > 0 && runASummary.traces.length === 0 && runBSummary.traces.length === 0;
 
   return (
-    <div className="space-y-6">
-      <div className="flex items-center gap-2 text-sm font-semibold" style={{ color: 'var(--ds-text-primary)' }}>
-        <ArrowLeftRight className="h-4 w-4" />
-        <span>Prompt Diff Viewer</span>
+    <div className="space-y-3">
+      {/* Compact header with explanation */}
+      <div className="flex items-center justify-between">
+        <div>
+          <h2 className="text-sm font-semibold" style={{ color: 'var(--ds-text-primary)' }}>
+            Compare Runs
+          </h2>
+          <p className="text-[11px]" style={{ color: 'var(--ds-text-muted)' }}>
+            Select two executions of the same workflow to diff their LLM prompts and responses.
+          </p>
+        </div>
       </div>
 
-      <div className="grid gap-4 lg:grid-cols-3">
-        <label className="space-y-2 text-sm">
+      {/* Compact selectors — all on one row */}
+      <div className="flex items-end gap-2">
+        <label className="flex-1 min-w-0 space-y-1 text-xs">
           <span style={{ color: 'var(--ds-text-muted)' }}>Run A</span>
           <select
             value={runAId}
             onChange={(event) => setRunAId(event.target.value)}
-            className="w-full rounded-lg border px-3 py-2 outline-none transition-colors"
+            className="w-full rounded-md border px-2 py-1.5 text-xs outline-none"
             style={{
               backgroundColor: 'var(--ds-bg-secondary)',
               borderColor: 'var(--ds-border-primary)',
@@ -453,13 +461,15 @@ export function PromptDiffViewer({ executions }: PromptDiffViewerProps) {
           </select>
         </label>
 
-        <label className="space-y-2 text-sm">
-          <span style={{ color: 'var(--ds-text-muted)' }}>Run B (same workflow steps)</span>
+        <ArrowLeftRight className="h-3.5 w-3.5 shrink-0 mb-1.5" style={{ color: 'var(--ds-text-muted)' }} />
+
+        <label className="flex-1 min-w-0 space-y-1 text-xs">
+          <span style={{ color: 'var(--ds-text-muted)' }}>Run B</span>
           <select
             value={runBId}
             onChange={(event) => setRunBId(event.target.value)}
             disabled={runBCandidates.length === 0}
-            className="w-full rounded-lg border px-3 py-2 outline-none transition-colors disabled:cursor-not-allowed disabled:opacity-60"
+            className="w-full rounded-md border px-2 py-1.5 text-xs outline-none disabled:cursor-not-allowed disabled:opacity-60"
             style={{
               backgroundColor: 'var(--ds-bg-secondary)',
               borderColor: 'var(--ds-border-primary)',
@@ -478,13 +488,13 @@ export function PromptDiffViewer({ executions }: PromptDiffViewerProps) {
           </select>
         </label>
 
-        <label className="space-y-2 text-sm">
-          <span style={{ color: 'var(--ds-text-muted)' }}>Shared Step</span>
+        <label className="w-48 shrink-0 space-y-1 text-xs">
+          <span style={{ color: 'var(--ds-text-muted)' }}>Step</span>
           <select
             value={selectedStepName}
             onChange={(event) => setSelectedStepName(event.target.value)}
             disabled={noSharedSteps}
-            className="w-full rounded-lg border px-3 py-2 outline-none transition-colors disabled:cursor-not-allowed disabled:opacity-60"
+            className="w-full rounded-md border px-2 py-1.5 text-xs outline-none disabled:cursor-not-allowed disabled:opacity-60"
             style={{
               backgroundColor: 'var(--ds-bg-secondary)',
               borderColor: 'var(--ds-border-primary)',
@@ -504,103 +514,86 @@ export function PromptDiffViewer({ executions }: PromptDiffViewerProps) {
         </label>
       </div>
 
-      {/* Mini pipeline flow showing where you are */}
+      {/* Compact pipeline step pills */}
       {runA && sharedStepNames.length > 0 && (
-        <div className="rounded-lg border p-3" style={{ backgroundColor: 'var(--ds-bg-secondary)', borderColor: 'var(--ds-border-primary)' }}>
-          <div className="flex items-center gap-1.5 mb-2">
-            <span className="text-[10px] uppercase tracking-wider font-medium" style={{ color: 'var(--ds-text-muted)' }}>
-              Pipeline: {runA.workflowName.replace(/_/g, ' ')}
-            </span>
+        <div className="flex items-center gap-1.5 flex-wrap">
+          {runA.steps.map((step, i) => {
+            const isSelected = step.name === selectedStepName;
+            const isShared = sharedStepNames.includes(step.name);
+            return (
+              <div key={step.id} className="flex items-center gap-1">
+                <button
+                  onClick={() => isShared && setSelectedStepName(step.name)}
+                  className={`rounded px-2 py-0.5 text-[10px] font-medium transition-all ${isShared ? 'cursor-pointer' : 'cursor-default opacity-30'}`}
+                  style={{
+                    backgroundColor: isSelected ? 'rgba(139, 92, 246, 0.2)' : 'var(--ds-bg-tertiary)',
+                    color: isSelected ? 'rgb(167, 139, 250)' : 'var(--ds-text-secondary)',
+                    border: isSelected ? '1px solid rgba(139, 92, 246, 0.4)' : '1px solid var(--ds-border-primary)',
+                  }}
+                >
+                  {step.name}
+                </button>
+                {i < runA.steps.length - 1 && (
+                  <span className="text-[9px]" style={{ color: 'var(--ds-text-muted)' }}>→</span>
+                )}
+              </div>
+            );
+          })}
+        </div>
+      )}
+
+      {/* Compact metrics comparison bar */}
+      {!noCompatibleRuns && !noSharedSteps && !noLlmTraces && (
+        <div
+          className="flex items-center justify-between rounded-md border px-3 py-2 text-[11px]"
+          style={{ backgroundColor: 'var(--ds-bg-secondary)', borderColor: 'var(--ds-border-primary)' }}
+        >
+          <div className="flex items-center gap-4">
+            <span style={{ color: 'var(--ds-text-muted)' }}>Run A:</span>
+            <span style={{ color: 'var(--ds-text-secondary)' }}>{formatTokens(runASummary.totalTokens)} tok</span>
+            <span style={{ color: 'var(--ds-text-secondary)' }}>{formatCost(runASummary.cost)}</span>
+            <span style={{ color: 'var(--ds-text-secondary)' }}>{formatDuration(runASummary.duration)}</span>
+            {runASummary.models[0] && <span style={{ color: 'var(--ds-text-muted)' }}>{runASummary.models[0]}</span>}
           </div>
-          <div className="flex items-center gap-1 flex-wrap">
-            {runA.steps.map((step, i) => {
-              const isSelected = step.name === selectedStepName;
-              const isShared = sharedStepNames.includes(step.name);
-              return (
-                <div key={step.id} className="flex items-center gap-1">
-                  <button
-                    onClick={() => isShared && setSelectedStepName(step.name)}
-                    className={`rounded-md px-2.5 py-1 text-[11px] font-medium transition-all ${isShared ? 'cursor-pointer' : 'cursor-default opacity-40'}`}
-                    style={{
-                      backgroundColor: isSelected ? 'rgba(139, 92, 246, 0.2)' : 'var(--ds-bg-tertiary)',
-                      color: isSelected ? 'rgb(167, 139, 250)' : 'var(--ds-text-secondary)',
-                      border: isSelected ? '1px solid rgba(139, 92, 246, 0.4)' : '1px solid var(--ds-border-primary)',
-                    }}
-                  >
-                    {step.name}
-                  </button>
-                  {i < runA.steps.length - 1 && (
-                    <span className="text-[10px]" style={{ color: 'var(--ds-text-muted)' }}>→</span>
-                  )}
-                </div>
-              );
-            })}
+          <div className="flex items-center gap-4">
+            <span style={{ color: 'var(--ds-text-muted)' }}>Run B:</span>
+            <span style={{ color: 'var(--ds-text-secondary)' }}>{formatTokens(runBSummary.totalTokens)} tok</span>
+            <span style={{ color: 'var(--ds-text-secondary)' }}>{formatCost(runBSummary.cost)}</span>
+            <span style={{ color: 'var(--ds-text-secondary)' }}>{formatDuration(runBSummary.duration)}</span>
+            {runBSummary.models[0] && <span style={{ color: 'var(--ds-text-muted)' }}>{runBSummary.models[0]}</span>}
           </div>
-          <div className="flex items-center gap-3 mt-2 text-[10px]" style={{ color: 'var(--ds-text-muted)' }}>
-            <span className="flex items-center gap-1">
-              <span className="w-2 h-2 rounded-sm" style={{ backgroundColor: 'rgba(245, 158, 11, 0.7)' }} /> Only in Run A
-            </span>
-            <span className="flex items-center gap-1">
-              <span className="w-2 h-2 rounded-sm" style={{ backgroundColor: 'rgba(59, 130, 246, 0.7)' }} /> Only in Run B
-            </span>
-            <span className="flex items-center gap-1">
-              <span className="w-2 h-2 rounded-sm" style={{ backgroundColor: 'rgba(139, 92, 246, 0.4)', border: '1px solid rgba(139,92,246,0.6)' }} /> Selected step
-            </span>
+          <div className="flex items-center gap-2">
+            <span className="flex items-center gap-1"><span className="w-2 h-2 rounded-sm" style={{ backgroundColor: 'rgba(245, 158, 11, 0.7)' }} /> Only A</span>
+            <span className="flex items-center gap-1"><span className="w-2 h-2 rounded-sm" style={{ backgroundColor: 'rgba(59, 130, 246, 0.7)' }} /> Only B</span>
           </div>
         </div>
       )}
 
       {noCompatibleRuns ? (
-        <div
-          className="rounded-lg border px-4 py-6 text-sm"
-          style={{
-            backgroundColor: 'var(--ds-bg-secondary)',
-            borderColor: 'var(--ds-border-primary)',
-            color: 'var(--ds-text-muted)',
-          }}
-        >
-          No other runs share step names with the selected Run A. Try selecting a different run.
+        <div className="rounded-md border px-4 py-4 text-xs" style={{ backgroundColor: 'var(--ds-bg-secondary)', borderColor: 'var(--ds-border-primary)', color: 'var(--ds-text-muted)' }}>
+          No other runs share step names with Run A. Try selecting a different run.
         </div>
       ) : noSharedSteps ? (
-        <div
-          className="rounded-lg border px-4 py-6 text-sm"
-          style={{
-            backgroundColor: 'var(--ds-bg-secondary)',
-            borderColor: 'var(--ds-border-primary)',
-            color: 'var(--ds-text-muted)',
-          }}
-        >
+        <div className="rounded-md border px-4 py-4 text-xs" style={{ backgroundColor: 'var(--ds-bg-secondary)', borderColor: 'var(--ds-border-primary)', color: 'var(--ds-text-muted)' }}>
           These runs do not share any step names.
         </div>
       ) : noLlmTraces ? (
-        <div
-          className="rounded-lg border px-4 py-6 text-sm"
-          style={{
-            backgroundColor: 'var(--ds-bg-secondary)',
-            borderColor: 'var(--ds-border-primary)',
-            color: 'var(--ds-text-muted)',
-          }}
-        >
+        <div className="rounded-md border px-4 py-4 text-xs" style={{ backgroundColor: 'var(--ds-bg-secondary)', borderColor: 'var(--ds-border-primary)', color: 'var(--ds-text-muted)' }}>
           No LLM traces in this step.
         </div>
       ) : (
         <>
-          <div className="grid gap-4 xl:grid-cols-2">
-            <MetricPanel title={leftLabel} summary={runASummary} />
-            <MetricPanel title={rightLabel} summary={runBSummary} />
-          </div>
-
           <DiffSection
-            icon={<FileText className="h-4 w-4" />}
-            title="Prompt comparison"
+            icon={<FileText className="h-3.5 w-3.5" />}
+            title="Prompt"
             rows={promptRows}
             leftLabel={leftLabel}
             rightLabel={rightLabel}
           />
 
           <DiffSection
-            icon={<MessageSquare className="h-4 w-4" />}
-            title="Response comparison"
+            icon={<MessageSquare className="h-3.5 w-3.5" />}
+            title="Response"
             rows={responseRows}
             leftLabel={leftLabel}
             rightLabel={rightLabel}
