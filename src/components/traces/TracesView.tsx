@@ -68,15 +68,15 @@ export function TracesView({ executions }: TracesViewProps) {
   });
 
   return (
-    <div className="flex h-full flex-col">
+    <div className="trace-table flex h-full flex-col">
       <div
-        className="flex items-center justify-between border-b"
+        className="flex flex-wrap items-center justify-between gap-x-4 gap-y-2 border-b"
         style={{ borderColor: 'var(--ds-border-primary)', padding: `var(--ds-section-py, 12px) var(--ds-panel-px, 16px)` }}
       >
         <h3 className="text-sm font-medium text-[var(--ds-text-primary)]">
           All Traces ({allTraces.length.toLocaleString()})
         </h3>
-        <div className="flex gap-2 text-xs text-[var(--ds-text-muted)]">
+        <div className="flex flex-wrap gap-2 whitespace-nowrap text-xs text-[var(--ds-text-muted)]">
           <span className="rounded-full border px-2 py-0.5" style={getTraceTypeStyles('llm')}>
             LLM: {allTraces.filter(t => t.type === 'llm').length}
           </span>
@@ -93,7 +93,7 @@ export function TracesView({ executions }: TracesViewProps) {
       </div>
 
       <div
-        className="grid grid-cols-[80px_1fr_120px_100px_80px_80px] gap-2 border-b text-[10px] uppercase tracking-wider text-[var(--ds-text-tertiary)]"
+        className="trace-row-head border-b text-[10px] uppercase tracking-wider text-[var(--ds-text-tertiary)]"
         style={{ borderColor: 'var(--ds-border-primary)', padding: 'var(--ds-table-header-padding, 8px 16px)' }}
       >
         <span>Type</span>
@@ -104,7 +104,7 @@ export function TracesView({ executions }: TracesViewProps) {
         <span>Status</span>
       </div>
 
-      <div ref={parentRef} className="flex-1 overflow-auto">
+      <div ref={parentRef} className="min-h-0 flex-1 overflow-auto">
         <div
           style={{
             height: `${virtualizer.getTotalSize()}px`,
@@ -117,40 +117,42 @@ export function TracesView({ executions }: TracesViewProps) {
             return (
               <div
                 key={virtualItem.key}
+                data-index={virtualItem.index}
+                ref={virtualizer.measureElement}
                 style={{
                   position: 'absolute',
                   top: 0,
                   left: 0,
                   width: '100%',
-                  height: `${virtualItem.size}px`,
                   transform: `translateY(${virtualItem.start}px)`,
                 }}
               >
                 <div
-                  className="grid grid-cols-[80px_1fr_120px_100px_80px_80px] items-center gap-2 border-b text-xs transition-colors hover:bg-[var(--ds-bg-secondary)]"
+                  className="trace-row border-b text-xs transition-colors hover:bg-[var(--ds-bg-secondary)]"
                   style={{
                     borderColor: 'var(--ds-border-primary)',
+                    minHeight: 'var(--ds-table-row-height)',
                     padding: 'var(--ds-table-header-padding, 8px 16px)',
                     backgroundColor:
                       trace.status === 'error' ? getStatusBackground(trace.status) : 'transparent',
                   }}
                 >
                   <span
-                    className="w-fit rounded-full border px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wide"
+                    className="w-fit rounded-full border px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wide [grid-area:type]"
                     style={getTraceTypeStyles(trace.type)}
                   >
                     {trace.type}
                   </span>
-                  <span className="truncate font-mono text-[11px] text-[var(--ds-text-primary)]">
+                  <span className="truncate font-mono text-[11px] text-[var(--ds-text-primary)] [grid-area:name]">
                     {trace.name}
                   </span>
-                  <span className="truncate text-[var(--ds-text-muted)]">{trace.workflowName}</span>
-                  <span className="truncate text-[var(--ds-text-muted)]">{trace.stepName}</span>
-                  <span className="font-mono text-[var(--ds-text-secondary)]">
+                  <span className="truncate text-[var(--ds-text-muted)] [grid-area:workflow]">{trace.workflowName}</span>
+                  <span className="truncate text-[var(--ds-text-muted)] [grid-area:step]">{trace.stepName}</span>
+                  <span className="justify-self-end font-mono text-[var(--ds-text-secondary)] [grid-area:duration] @2xl:justify-self-stretch">
                     {formatDuration(trace.duration)}
                   </span>
                   <span
-                    className="text-[10px] font-medium"
+                    className="justify-self-end text-[10px] font-medium [grid-area:status] @2xl:justify-self-stretch"
                     style={{ color: getStatusColor(trace.status) }}
                   >
                     {trace.status}

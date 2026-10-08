@@ -1,4 +1,4 @@
-import { useState, useCallback } from 'react';
+import { useState, useCallback, useEffect, useRef } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import {
   LayoutDashboard, GitBranch, Activity, BarChart3, Search,
@@ -62,6 +62,35 @@ export function App() {
   const [showHero, setShowHero] = useState(true);
   const [commandPaletteOpen, setCommandPaletteOpen] = useState(false);
   const [shortcutsHelpOpen, setShortcutsHelpOpen] = useState(false);
+  const navScrollRef = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    navScrollRef.current
+      ?.querySelector('[aria-current="page"]')
+      ?.scrollIntoView({ block: 'nearest', inline: 'nearest' });
+  }, [viewMode]);
+
+  // Chromium keeps stale scroll-timeline progress once overflow disappears, so edge fades are tracked here.
+  useEffect(() => {
+    const scroller = navScrollRef.current;
+    if (!scroller) return;
+
+    const updateFades = () => {
+      const maxScroll = scroller.scrollWidth - scroller.clientWidth;
+      scroller.dataset.fadeStart = String(scroller.scrollLeft > 1);
+      scroller.dataset.fadeEnd = String(scroller.scrollLeft < maxScroll - 1);
+    };
+
+    updateFades();
+    scroller.addEventListener('scroll', updateFades, { passive: true });
+    const observer = new ResizeObserver(updateFades);
+    observer.observe(scroller);
+
+    return () => {
+      scroller.removeEventListener('scroll', updateFades);
+      observer.disconnect();
+    };
+  }, [showHero, density]);
 
   const runningCount = allExecutions.filter(e => e.status === 'running').length;
   const failedCount = allExecutions.filter(e => e.status === 'failed').length;
@@ -133,59 +162,60 @@ export function App() {
 
       {/* Top bar */}
       <header
-        className="border-b backdrop-blur-xl"
+        className="flex flex-col gap-2.5 border-b p-[min(var(--ds-header-padding),0.75rem)] backdrop-blur-xl sm:p-[var(--ds-header-padding)]"
         style={{
           borderColor: 'var(--ds-border-secondary)',
           backgroundColor: 'var(--ds-bg-app)',
-          padding: `var(--ds-header-padding)`,
         }}
       >
-        <div className="flex items-center justify-between">
-          <div className="flex items-center gap-4">
-            <div className="flex items-center gap-2.5">
-              <div className="rounded-lg bg-gradient-to-br from-conductor-500 to-conductor-700 p-1.5 shadow-md shadow-conductor-500/20">
-                <Workflow className="h-4 w-4 text-white" />
-              </div>
-              <div>
-                <h1 className="text-sm font-bold tracking-tight" style={{ color: 'var(--ds-text-primary)' }}>Conductor</h1>
-                <p className="text-xs" style={{ color: 'var(--ds-text-muted)' }}>Meridian Health • Output.ai</p>
-              </div>
+        <div className="flex flex-wrap items-center justify-between gap-x-4 gap-y-2.5">
+          <div className="flex shrink-0 items-center gap-2.5">
+            <div className="rounded-lg bg-gradient-to-br from-conductor-500 to-conductor-700 p-1.5 shadow-md shadow-conductor-500/20">
+              <Workflow className="h-4 w-4 text-white" />
+            </div>
+            <div>
+              <h1 className="text-sm font-bold tracking-tight" style={{ color: 'var(--ds-text-primary)' }}>Conductor</h1>
+              <p className="text-xs" style={{ color: 'var(--ds-text-muted)' }}>Meridian Health • Output.ai</p>
             </div>
           </div>
 
-          {/* Search + filter + settings */}
-          <div className="flex items-center gap-2">
-            <div className="relative">
-              <Search className="absolute left-2.5 top-1/2 h-3.5 w-3.5 -translate-y-1/2 text-zinc-500" />
+          {/* Search + filter + settings; wraps below the brand and fills the row when space is tight */}
+          <div className="relative flex min-w-0 flex-[1_1_20rem] items-center justify-end gap-2">
+            <div className="relative min-w-0 flex-1 sm:max-w-60">
+              <Search className="pointer-events-none absolute left-2.5 top-1/2 h-3.5 w-3.5 -translate-y-1/2 text-zinc-500" />
               <input
                 type="text"
+                aria-label="Search workflows"
                 placeholder="Search workflows..."
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
-                className="rounded-lg border pl-8 pr-3 text-xs placeholder:text-zinc-600 focus:outline-none focus:ring-1 focus:ring-conductor-500/20 transition-all"
+                className="w-full rounded-lg border pl-8 pr-3 text-xs placeholder:text-zinc-600 focus:outline-none focus:ring-1 focus:ring-conductor-500/20 transition-all"
                 style={{
                   height: 'var(--ds-input-height)',
-                  width: '200px',
                   borderColor: 'var(--ds-input-border)',
                   backgroundColor: 'var(--ds-input-bg)',
                   color: 'var(--ds-text-primary)',
                 }}
               />
             </div>
-            <div className="relative">
+            <div className="sm:relative">
               <button
                 onClick={() => setFilterOpen(!filterOpen)}
+                aria-expanded={filterOpen}
                 className={cn(
-                  'flex items-center gap-1.5 rounded-lg border px-3 py-1.5 text-xs font-medium transition-all',
+                  'flex shrink-0 items-center gap-1.5 rounded-lg border px-2.5 text-xs font-medium transition-all sm:px-3',
                   filterOpen
                     ? 'border-conductor-500/40 bg-conductor-500/10 text-conductor-300'
                     : 'text-zinc-400 hover:text-zinc-200',
                 )}
-                style={{ borderColor: filterOpen ? undefined : 'var(--ds-input-border)' }}
+                style={{
+                  height: 'var(--ds-input-height)',
+                  borderColor: filterOpen ? undefined : 'var(--ds-input-border)',
+                }}
               >
                 <Filter className="h-3.5 w-3.5" />
-                Filters
-                <ChevronDown className={cn('h-3 w-3 transition-transform', filterOpen && 'rotate-180')} />
+                <span className="sr-only sm:not-sr-only">Filters</span>
+                <ChevronDown className={cn('hidden h-3 w-3 transition-transform sm:block', filterOpen && 'rotate-180')} />
               </button>
 
               <AnimatePresence>
@@ -236,11 +266,14 @@ export function App() {
             {/* Live mode toggle */}
             <button
               onClick={toggleLive}
+              aria-pressed={isLive}
               className={cn(
-                'rounded-lg border p-1.5 transition-all',
+                'flex shrink-0 items-center justify-center rounded-lg border transition-all',
                 isLive ? 'border-green-500/40 bg-green-500/10' : 'hover:opacity-80',
               )}
               style={{
+                height: 'var(--ds-input-height)',
+                width: 'var(--ds-input-height)',
                 borderColor: isLive ? undefined : 'var(--ds-border-primary)',
                 color: isLive ? 'rgb(34,197,94)' : 'var(--ds-text-tertiary)',
                 backgroundColor: isLive ? undefined : 'var(--ds-bg-secondary)',
@@ -253,8 +286,10 @@ export function App() {
             {/* Settings button */}
             <button
               onClick={() => setSettingsOpen(true)}
-              className="rounded-lg border p-1.5 transition-all hover:opacity-80"
+              className="flex shrink-0 items-center justify-center rounded-lg border transition-all hover:opacity-80"
               style={{
+                height: 'var(--ds-input-height)',
+                width: 'var(--ds-input-height)',
                 borderColor: 'var(--ds-border-primary)',
                 color: 'var(--ds-text-tertiary)',
                 backgroundColor: 'var(--ds-bg-secondary)',
@@ -266,69 +301,80 @@ export function App() {
           </div>
         </div>
 
-        {/* Stats bar + Nav */}
-        <div className="mt-2.5 flex items-center justify-between">
+        {/* Stats bar + Nav; nav drops to its own line before either is clipped */}
+        <div className="flex flex-wrap items-center justify-between gap-x-6 gap-y-2.5">
           {/* Quick stats */}
-          <div className="flex items-center" style={{ gap: 'var(--ds-stats-gap, 16px)' }}>
-            <div className="flex items-center gap-1.5">
-              <CheckCircle2 className="h-3.5 w-3.5" style={{ color: 'var(--ds-status-success)' }} />
-              <span className="text-xs" style={{ color: 'var(--ds-text-secondary)' }}>
-                <span className="font-semibold" style={{ color: 'var(--ds-status-success)' }}>{(stats.successRate * 100).toFixed(0)}%</span> success
-              </span>
+          <div
+            className="flex min-w-0 flex-wrap items-center gap-y-1.5 [&_span]:whitespace-nowrap"
+            style={{ columnGap: 'var(--ds-stats-gap, 16px)' }}
+          >
+            <div className="flex flex-wrap items-center gap-y-1.5" style={{ columnGap: 'var(--ds-stats-gap, 16px)' }}>
+              <div className="flex items-center gap-1.5">
+                <CheckCircle2 className="h-3.5 w-3.5" style={{ color: 'var(--ds-status-success)' }} />
+                <span className="text-xs" style={{ color: 'var(--ds-text-secondary)' }}>
+                  <span className="font-semibold" style={{ color: 'var(--ds-status-success)' }}>{(stats.successRate * 100).toFixed(0)}%</span> success
+                </span>
+              </div>
+              <div className="flex items-center gap-1.5">
+                <Loader2 className={cn("h-3.5 w-3.5", runningCount > 0 && "animate-spin")} style={{ color: 'var(--ds-status-info)' }} />
+                <span className="text-xs" style={{ color: 'var(--ds-text-secondary)' }}>
+                  <span className="font-semibold" style={{ color: 'var(--ds-status-info)' }}>{runningCount}</span> running
+                </span>
+              </div>
+              <div className="flex items-center gap-1.5">
+                <XCircle className="h-3.5 w-3.5" style={{ color: 'var(--ds-status-error)' }} />
+                <span className="text-xs" style={{ color: 'var(--ds-text-secondary)' }}>
+                  <span className="font-semibold" style={{ color: 'var(--ds-status-error)' }}>{failedCount}</span> failed
+                </span>
+              </div>
             </div>
-            <div className="flex items-center gap-1.5">
-              <Loader2 className={cn("h-3.5 w-3.5", runningCount > 0 && "animate-spin")} style={{ color: 'var(--ds-status-info)' }} />
-              <span className="text-xs" style={{ color: 'var(--ds-text-secondary)' }}>
-                <span className="font-semibold" style={{ color: 'var(--ds-status-info)' }}>{runningCount}</span> running
-              </span>
-            </div>
-            <div className="flex items-center gap-1.5">
-              <XCircle className="h-3.5 w-3.5" style={{ color: 'var(--ds-status-error)' }} />
-              <span className="text-xs" style={{ color: 'var(--ds-text-secondary)' }}>
-                <span className="font-semibold" style={{ color: 'var(--ds-status-error)' }}>{failedCount}</span> failed
-              </span>
-            </div>
-            <div className="h-3 w-px" style={{ backgroundColor: 'var(--ds-border-primary)' }} />
-            <div className="flex items-center gap-1.5">
-              <DollarSign className="h-3.5 w-3.5" style={{ color: 'var(--ds-text-muted)' }} />
-              <span className="text-xs" style={{ color: 'var(--ds-text-tertiary)' }}>
-                {formatCost(stats.totalCost)}
-              </span>
-            </div>
-            <div className="flex items-center gap-1.5">
-              <Zap className="h-3.5 w-3.5" style={{ color: 'var(--ds-text-muted)' }} />
-              <span className="text-xs" style={{ color: 'var(--ds-text-tertiary)' }}>
-                {formatTokens(stats.totalTokens)}
-              </span>
-            </div>
-            <div className="flex items-center gap-1.5">
-              <Clock className="h-3.5 w-3.5" style={{ color: 'var(--ds-text-muted)' }} />
-              <span className="text-xs" style={{ color: 'var(--ds-text-tertiary)' }}>
-                ~{formatDuration(stats.avgDuration)} avg
-              </span>
+            <div className="hidden h-3 w-px md:block" style={{ backgroundColor: 'var(--ds-border-primary)' }} />
+            <div className="flex flex-wrap items-center gap-y-1.5" style={{ columnGap: 'var(--ds-stats-gap, 16px)' }}>
+              <div className="flex items-center gap-1.5">
+                <DollarSign className="h-3.5 w-3.5" style={{ color: 'var(--ds-text-muted)' }} />
+                <span className="text-xs" style={{ color: 'var(--ds-text-tertiary)' }}>
+                  {formatCost(stats.totalCost)}
+                </span>
+              </div>
+              <div className="flex items-center gap-1.5">
+                <Zap className="h-3.5 w-3.5" style={{ color: 'var(--ds-text-muted)' }} />
+                <span className="text-xs" style={{ color: 'var(--ds-text-tertiary)' }}>
+                  {formatTokens(stats.totalTokens)}
+                </span>
+              </div>
+              <div className="flex items-center gap-1.5">
+                <Clock className="h-3.5 w-3.5" style={{ color: 'var(--ds-text-muted)' }} />
+                <span className="text-xs" style={{ color: 'var(--ds-text-tertiary)' }}>
+                  ~{formatDuration(stats.avgDuration)} avg
+                </span>
+              </div>
             </div>
           </div>
 
-          {/* Nav tabs */}
+          {/* Nav tabs; scroll horizontally when narrower than the tab strip */}
           <nav
-            className="flex items-center gap-0.5 rounded-lg border p-0.5"
+            aria-label="Views"
+            className="min-w-0 max-w-full rounded-lg border"
             style={{ backgroundColor: 'var(--ds-nav-bg)', borderColor: 'var(--ds-border-secondary)' }}
           >
-            {NAV_ITEMS.map(item => (
-              <button
-                key={item.id}
-                onClick={() => setViewMode(item.id)}
-                className="flex items-center gap-1.5 rounded-md text-xs font-medium transition-all"
-                style={{
-                  padding: `var(--ds-nav-btn-py, 6px) var(--ds-nav-btn-px, 12px)`,
-                  backgroundColor: viewMode === item.id ? 'var(--ds-nav-active)' : 'transparent',
-                  color: viewMode === item.id ? 'var(--ds-nav-active-text)' : 'var(--ds-text-muted)',
-                }}
-              >
-                {item.icon}
-                {item.label}
-              </button>
-            ))}
+            <div ref={navScrollRef} className="scroll-x-fade flex items-center gap-0.5 p-0.5">
+              {NAV_ITEMS.map(item => (
+                <button
+                  key={item.id}
+                  onClick={() => setViewMode(item.id)}
+                  aria-current={viewMode === item.id ? 'page' : undefined}
+                  className="flex shrink-0 items-center gap-1.5 whitespace-nowrap rounded-md text-xs font-medium transition-all focus-visible:outline-2 focus-visible:-outline-offset-2 focus-visible:outline-conductor-500"
+                  style={{
+                    padding: `var(--ds-nav-btn-py, 6px) var(--ds-nav-btn-px, 12px)`,
+                    backgroundColor: viewMode === item.id ? 'var(--ds-nav-active)' : 'transparent',
+                    color: viewMode === item.id ? 'var(--ds-nav-active-text)' : 'var(--ds-text-muted)',
+                  }}
+                >
+                  {item.icon}
+                  {item.label}
+                </button>
+              ))}
+            </div>
           </nav>
         </div>
       </header>

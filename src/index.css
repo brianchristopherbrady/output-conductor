@@ -54,3 +54,66 @@
   }
 }
 
+/* Horizontal scroller; data-fade-start/end flag edges with more content beyond them. */
+@layer components {
+  .scroll-x-fade {
+    --scroll-fade-start: 0px;
+    --scroll-fade-end: 0px;
+    overflow-x: auto;
+    overscroll-behavior-x: contain;
+    scroll-padding-inline: 1.5rem;
+    scrollbar-width: none;
+    mask-image: linear-gradient(
+      to right,
+      transparent,
+      #000 var(--scroll-fade-start),
+      #000 calc(100% - var(--scroll-fade-end)),
+      transparent
+    );
+  }
+
+  .scroll-x-fade::-webkit-scrollbar {
+    display: none;
+  }
+
+  .scroll-x-fade[data-fade-start='true'] {
+    --scroll-fade-start: 1.5rem;
+  }
+
+  .scroll-x-fade[data-fade-end='true'] {
+    --scroll-fade-end: 1.5rem;
+  }
+
+  /* Trace rows stack into two lines until the table columns fit their container. */
+  .trace-table {
+    container-type: inline-size;
+  }
+
+  .trace-row {
+    display: grid;
+    grid-template-columns: 3.25rem minmax(0, 1fr) minmax(0, 1fr) auto;
+    grid-template-areas:
+      'type name name duration'
+      '. workflow step status';
+    align-items: center;
+    column-gap: 0.5rem;
+    row-gap: 0.25rem;
+  }
+
+  .trace-row-head {
+    display: none;
+  }
+
+  @container (min-width: 42rem) {
+    .trace-row,
+    .trace-row-head {
+      display: grid;
+      grid-template-columns: 80px minmax(0, 1fr) 120px 100px 80px 80px;
+      grid-template-areas: 'type name workflow step duration status';
+      align-items: center;
+      column-gap: 0.5rem;
+      row-gap: 0;
+    }
+  }
+}
+
