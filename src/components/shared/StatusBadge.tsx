@@ -12,7 +12,7 @@ export function StatusBadge({ status, size = 'sm', pulse = false }: StatusBadgeP
 
   return (
     <span
-      className={`inline-flex items-center gap-1.5 rounded-full border px-2 py-0.5 text-xs font-medium capitalize ${size === 'md' ? 'px-2.5 py-1 text-sm' : ''}`}
+      className={`inline-flex shrink-0 items-center gap-1.5 whitespace-nowrap rounded-full border px-2 py-0.5 text-xs font-medium capitalize ${size === 'md' ? 'px-2.5 py-1 text-sm' : ''}`}
       style={{
         color: getStatusColor(status),
         borderColor,

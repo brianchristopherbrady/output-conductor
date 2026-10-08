@@ -346,12 +346,10 @@ export function App() {
             >
               {/* Execution list */}
               <div
-                className="flex flex-col overflow-hidden border-r transition-all"
+                className="flex min-w-0 flex-col overflow-hidden border-r transition-all"
                 style={{
                   borderColor: 'var(--ds-border-secondary)',
-                  width: selectedExecution ? '50%' : undefined,
-                  maxWidth: selectedExecution ? undefined : '80rem',
-                  marginInline: selectedExecution ? undefined : 'auto',
+                  width: selectedExecution ? '50%' : '100%',
                 }}
               >
               <div

@@ -1,4 +1,4 @@
-import { useRef, memo } from 'react';
+import { useRef, useLayoutEffect, memo } from 'react';
 import { useVirtualizer } from '@tanstack/react-virtual';
 import { motion } from 'framer-motion';
 import { formatDistanceToNow } from 'date-fns';
@@ -28,7 +28,6 @@ const ExecutionRow = memo(function ExecutionRow({
 
   return (
     <motion.div
-      layout
       onClick={onSelect}
       className="group cursor-pointer transition-all duration-150"
       style={{
@@ -41,16 +40,16 @@ const ExecutionRow = memo(function ExecutionRow({
     >
       <div className="flex items-center justify-between gap-4">
         <div className="min-w-0 flex-1">
-          <div className="flex items-center gap-3">
+          <div className="flex min-w-0 flex-wrap items-center gap-x-3 gap-y-2">
             <h3
-              className="truncate font-semibold"
+              className="max-w-full truncate font-semibold"
               style={{ color: 'var(--ds-text-primary)', fontSize: 'calc(var(--ds-font-size) + 2px)' }}
             >
               {execution.workflowName.replace(/_/g, ' ')}
             </h3>
             <StatusBadge status={execution.status} />
           </div>
-          <div className="mt-2 flex items-center gap-4" style={{ color: 'var(--ds-text-muted)' }}>
+          <div className="mt-2 flex flex-wrap items-center gap-x-4 gap-y-2 [&>span]:whitespace-nowrap [&>span>svg]:shrink-0" style={{ color: 'var(--ds-text-muted)' }}>
             <span className="flex items-center gap-1.5">
               <Clock style={{ width: 'var(--ds-icon-size)', height: 'var(--ds-icon-size)' }} />
               {formatDistanceToNow(execution.startedAt, { addSuffix: true })}
@@ -70,7 +69,7 @@ const ExecutionRow = memo(function ExecutionRow({
           </div>
         </div>
         {execution.duration && (
-          <div className="text-right">
+          <div className="shrink-0 whitespace-nowrap text-right">
             <span className="font-mono font-medium" style={{ color: 'var(--ds-text-tertiary)' }}>{formatDuration(execution.duration)}</span>
           </div>
         )}
@@ -110,15 +109,38 @@ export function ExecutionList({ executions, selectedId, onSelect }: ExecutionLis
     count: executions.length,
     getScrollElement: () => parentRef.current,
     estimateSize: () => rowHeight,
+    getItemKey: (index) => executions[index].id,
+    measureElement: (element) => element.getBoundingClientRect().height,
     overscan: 10,
   });
+
+  useLayoutEffect(() => {
+    const parent = parentRef.current;
+    if (!parent) return;
+
+    const measureRows = () => {
+      parent.querySelectorAll<HTMLDivElement>('[data-index]').forEach((element) => {
+        virtualizer.measureElement(element);
+      });
+    };
+
+    measureRows();
+    const observer = new ResizeObserver(measureRows);
+    observer.observe(parent);
+    window.addEventListener('resize', measureRows);
+
+    return () => {
+      observer.disconnect();
+      window.removeEventListener('resize', measureRows);
+    };
+  }, [virtualizer, density]);
 
   const listGap = density === 'compact' ? '1px 4px' : density === 'spacious' ? '4px 6px' : '2px 4px';
 
   return (
     <div
       ref={parentRef}
-      className="h-full overflow-auto"
+      className="min-h-0 flex-1 overflow-auto"
     >
       <div
         style={{
@@ -132,12 +154,13 @@ export function ExecutionList({ executions, selectedId, onSelect }: ExecutionLis
           return (
             <div
               key={virtualItem.key}
+              data-index={virtualItem.index}
+              ref={(element) => virtualizer.measureElement(element)}
               style={{
                 position: 'absolute',
                 top: 0,
                 left: 0,
                 width: '100%',
-                height: `${virtualItem.size}px`,
                 transform: `translateY(${virtualItem.start}px)`,
               }}
             >
